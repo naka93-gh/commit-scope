@@ -15,7 +15,7 @@ export function HeatmapChart({ commits }: Props) {
   const maxCount = Math.max(...cells.map((c) => c.count), 1);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4">時間帯ヒートマップ</h3>
       <div className="overflow-x-auto">
         <svg
@@ -29,8 +29,9 @@ export function HeatmapChart({ commits }: Props) {
               x={80 + h * (CELL_SIZE + GAP) + CELL_SIZE / 2}
               y={16}
               textAnchor="middle"
-              fill="#9ca3af"
+              fill="var(--cs-text-tertiary)"
               fontSize={10}
+              fontFamily="'DM Mono', monospace"
             >
               {h}
             </text>
@@ -43,8 +44,9 @@ export function HeatmapChart({ commits }: Props) {
                 x={60}
                 y={30 + day * (CELL_SIZE + GAP) + CELL_SIZE / 2 + 4}
                 textAnchor="end"
-                fill="#9ca3af"
+                fill="var(--cs-text-secondary)"
                 fontSize={12}
+                fontFamily="'DM Sans', sans-serif"
               >
                 {label}
               </text>
@@ -61,7 +63,7 @@ export function HeatmapChart({ commits }: Props) {
                     y={30 + day * (CELL_SIZE + GAP)}
                     width={CELL_SIZE}
                     height={CELL_SIZE}
-                    rx={4}
+                    rx={6}
                     fill={intensityToColor(intensity)}
                   >
                     <title>
@@ -76,7 +78,7 @@ export function HeatmapChart({ commits }: Props) {
       </div>
 
       {/* 凡例 */}
-      <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+      <div className="flex items-center gap-2 mt-3 text-xs text-cs-text-tertiary">
         <span>少</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
           <div
@@ -91,11 +93,12 @@ export function HeatmapChart({ commits }: Props) {
   );
 }
 
+/** primary カラーベースのグラデーション */
 function intensityToColor(intensity: number): string {
-  if (intensity === 0) return "#1f2937";
-  // 青系のグラデーション
-  const r = Math.round(30 + intensity * 29);
-  const g = Math.round(41 + intensity * 89);
-  const b = Math.round(59 + intensity * 187);
+  if (intensity === 0) return "var(--cs-surface-2)";
+  // #2E1A28 (primarySubtle) → #C74B8A (primary) のグラデーション
+  const r = Math.round(46 + intensity * (199 - 46));
+  const g = Math.round(26 + intensity * (75 - 26));
+  const b = Math.round(40 + intensity * (138 - 40));
   return `rgb(${r}, ${g}, ${b})`;
 }

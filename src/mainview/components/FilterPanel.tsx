@@ -39,40 +39,44 @@ export function FilterPanel({ commits, filter, onChange }: Props) {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 mb-6">
-      <h3 className="text-sm font-semibold text-gray-400 mb-3">フィルター</h3>
+    <div className="bg-cs-surface border border-cs-border rounded-xl p-4 mb-6">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-cs-primary mb-3">
+        フィルター
+      </h3>
 
       <div className="flex gap-6 flex-wrap">
         {/* 期間指定 */}
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-400">期間:</label>
+          <label className="text-sm text-cs-text-secondary">期間:</label>
           <input
             type="date"
             value={filter.dateFrom}
             onChange={(e) => onChange({ ...filter, dateFrom: e.target.value })}
-            className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white
-                       focus:outline-none focus:border-blue-500"
+            className="px-2 py-1 bg-cs-surface-2 border border-cs-border rounded-lg text-sm
+                       text-cs-text-primary focus:outline-none focus:border-cs-primary transition-colors"
           />
-          <span className="text-gray-500">〜</span>
+          <span className="text-cs-text-tertiary">〜</span>
           <input
             type="date"
             value={filter.dateTo}
             onChange={(e) => onChange({ ...filter, dateTo: e.target.value })}
-            className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm text-white
-                       focus:outline-none focus:border-blue-500"
+            className="px-2 py-1 bg-cs-surface-2 border border-cs-border rounded-lg text-sm
+                       text-cs-text-primary focus:outline-none focus:border-cs-primary transition-colors"
           />
         </div>
 
         {/* コミッター選択 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1 flex-wrap">
-            <label className="text-sm text-gray-400 mr-1">コミッター:</label>
+            <label className="text-sm text-cs-text-secondary mr-1">
+              コミッター:
+            </label>
             <button
               onClick={selectAll}
-              className={`px-2 py-0.5 text-xs rounded ${
+              className={`px-2 py-0.5 text-xs rounded-lg transition-colors ${
                 allSelected
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                  ? "bg-cs-primary text-white"
+                  : "bg-cs-surface-2 text-cs-text-secondary border border-cs-border-subtle hover:bg-cs-primary-subtle"
               }`}
             >
               全員
@@ -83,15 +87,15 @@ export function FilterPanel({ commits, filter, onChange }: Props) {
                 <button
                   key={author}
                   onClick={() => toggleAuthor(author)}
-                  className={`px-2 py-0.5 text-xs rounded truncate max-w-[160px] ${
+                  className={`px-2 py-0.5 text-xs rounded-lg truncate max-w-[160px] transition-colors ${
                     selected
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                      ? "bg-cs-primary text-white"
+                      : "bg-cs-surface-2 text-cs-text-secondary border border-cs-border-subtle hover:bg-cs-primary-subtle"
                   }`}
                   title={`${author} (${count})`}
                 >
                   {author}
-                  <span className="ml-1 opacity-60">{count}</span>
+                  <span className="ml-1 opacity-60 font-mono">{count}</span>
                 </button>
               );
             })}
