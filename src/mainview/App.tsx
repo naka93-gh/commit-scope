@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { rpc } from "./rpc";
 import type { CommitData } from "../shared/types";
+import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
 
 function App() {
   const [repoPath, setRepoPath] = useState("");
@@ -71,6 +72,13 @@ function App() {
               label="変更ファイル数"
               value={commits.reduce((sum, c) => sum + c.files.length, 0)}
             />
+          </div>
+        )}
+
+        {/* コミット頻度チャート */}
+        {commits.length > 0 && (
+          <div className="mb-6">
+            <CommitFrequencyChart commits={commits} />
           </div>
         )}
 
