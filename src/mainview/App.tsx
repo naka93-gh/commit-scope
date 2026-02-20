@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { rpc } from "./rpc";
 import type { CommitData } from "../shared/types";
 import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
@@ -6,12 +6,29 @@ import { HeatmapChart } from "./components/HeatmapChart";
 import { LinesChangedChart } from "./components/LinesChangedChart";
 import { DirectoryChart } from "./components/DirectoryChart";
 import { MessageAnalysis } from "./components/MessageAnalysis";
+import {
+  FilterPanel,
+  applyFilter,
+  type FilterState,
+} from "./components/FilterPanel";
+
+const INITIAL_FILTER: FilterState = {
+  dateFrom: "",
+  dateTo: "",
+  selectedAuthors: new Set(),
+};
 
 function App() {
   const [repoPath, setRepoPath] = useState("");
   const [commits, setCommits] = useState<CommitData[]>([]);
+  const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const filtered = useMemo(
+    () => applyFilter(commits, filter),
+    [commits, filter],
+  );
 
   const handleAnalyze = async () => {
     if (!repoPath.trim()) return;
@@ -64,41 +81,50 @@ function App() {
           </div>
         )}
 
+        {/* フィルター */}
+        {commits.length > 0 && (
+          <FilterPanel
+            commits={commits}
+            filter={filter}
+            onChange={setFilter}
+          />
+        )}
+
         {/* サマリー */}
         {commits.length > 0 && (
           <div className="mb-6 grid grid-cols-3 gap-4">
-            <SummaryCard label="コミット数" value={commits.length} />
+            <SummaryCard label="コミット数" value={filtered.length} />
             <SummaryCard
               label="コミッター数"
-              value={new Set(commits.map((c) => c.email)).size}
+              value={new Set(filtered.map((c) => c.email)).size}
             />
             <SummaryCard
               label="変更ファイル数"
-              value={commits.reduce((sum, c) => sum + c.files.length, 0)}
+              value={filtered.reduce((sum, c) => sum + c.files.length, 0)}
             />
           </div>
         )}
 
         {/* ダッシュボード */}
-        {commits.length > 0 && (
+        {filtered.length > 0 && (
           <div className="space-y-6 mb-6">
-            <CommitFrequencyChart commits={commits} />
-            <HeatmapChart commits={commits} />
-            <LinesChangedChart commits={commits} />
+            <CommitFrequencyChart commits={filtered} />
+            <HeatmapChart commits={filtered} />
+            <LinesChangedChart commits={filtered} />
             <div className="grid grid-cols-2 gap-6">
-              <DirectoryChart commits={commits} />
-              <MessageAnalysis commits={commits} />
+              <DirectoryChart commits={filtered} />
+              <MessageAnalysis commits={filtered} />
             </div>
           </div>
         )}
 
         {/* コミット一覧 */}
-        {commits.length > 0 && (
+        {filtered.length > 0 && (
           <div className="space-y-2">
             <h2 className="text-xl font-semibold mb-3">
-              最近のコミット（{Math.min(commits.length, 50)} 件表示）
+              最近のコミット（{Math.min(filtered.length, 50)} 件表示）
             </h2>
-            {commits.slice(0, 50).map((commit) => (
+            {filtered.slice(0, 50).map((commit) => (
               <CommitRow key={commit.hash} commit={commit} />
             ))}
           </div>
