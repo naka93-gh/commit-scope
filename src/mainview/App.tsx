@@ -2,6 +2,10 @@ import { useState } from "react";
 import { rpc } from "./rpc";
 import type { CommitData } from "../shared/types";
 import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
+import { HeatmapChart } from "./components/HeatmapChart";
+import { LinesChangedChart } from "./components/LinesChangedChart";
+import { DirectoryChart } from "./components/DirectoryChart";
+import { MessageAnalysis } from "./components/MessageAnalysis";
 
 function App() {
   const [repoPath, setRepoPath] = useState("");
@@ -75,10 +79,16 @@ function App() {
           </div>
         )}
 
-        {/* コミット頻度チャート */}
+        {/* ダッシュボード */}
         {commits.length > 0 && (
-          <div className="mb-6">
+          <div className="space-y-6 mb-6">
             <CommitFrequencyChart commits={commits} />
+            <HeatmapChart commits={commits} />
+            <LinesChangedChart commits={commits} />
+            <div className="grid grid-cols-2 gap-6">
+              <DirectoryChart commits={commits} />
+              <MessageAnalysis commits={commits} />
+            </div>
           </div>
         )}
 
