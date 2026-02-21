@@ -15,6 +15,15 @@ export interface CommitData {
   files: FileChange[];
 }
 
+/** ブランチ情報 */
+export interface BranchInfo {
+  name: string;
+  isCurrent: boolean;
+  lastCommitDate: string; // ISO 8601
+  lastCommitAuthor: string;
+  isRemote: boolean;
+}
+
 /** RPC スキーマ: Main(Bun) ↔ Renderer(Webview) 間の通信定義 */
 export type CommitScopeRPC = {
   bun: {
@@ -26,6 +35,10 @@ export type CommitScopeRPC = {
       analyzeRepository: {
         params: { path: string };
         response: void;
+      };
+      getBranches: {
+        params: { path: string };
+        response: BranchInfo[];
       };
     };
     messages: {};

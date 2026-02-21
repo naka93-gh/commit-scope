@@ -11,6 +11,7 @@ import {
   applyFilter,
   type FilterState,
 } from "./components/FilterPanel";
+import { BranchOverviewCard } from "./components/BranchOverviewCard";
 import { THEME, THEME_STORAGE_KEY, type Theme } from "../shared/config";
 import { useRecentRepos } from "./hooks/useRecentRepos";
 
@@ -307,6 +308,13 @@ function App() {
                 />
               </div>
             </>
+          )}
+
+          {/* ブランチ概況 */}
+          {commits.length > 0 && loadingStep === null && (
+            <div className="mb-6">
+              <BranchOverviewCard repoPath={repoPath.trim()} />
+            </div>
           )}
 
           {/* ダッシュボード (steps 2-6) */}

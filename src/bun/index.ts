@@ -8,6 +8,7 @@ import {
   isAncestor,
 } from "./git-log-parser";
 import { readCache, writeCache } from "./cache";
+import { getBranchList } from "./git-branch-parser";
 import { initApplicationMenu } from "./app-menu";
 import { createLogger } from "./logger";
 
@@ -47,6 +48,10 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
           startingFolder: startingFolder || "~/",
         });
         return paths.length > 0 ? paths[0] : null;
+      },
+      /** ブランチ一覧を取得 */
+      getBranches: async ({ path }) => {
+        return getBranchList(path);
       },
       /** 指定パスの Git リポジトリを解析開始（ストリーミング） */
       analyzeRepository: async ({ path }) => {
