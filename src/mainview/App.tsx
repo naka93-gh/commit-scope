@@ -13,6 +13,7 @@ import {
 import { BranchOverviewCard } from "./components/BranchOverviewCard";
 import { THEME, THEME_STORAGE_KEY, type Theme } from "../shared/config";
 import { useRecentRepos } from "./hooks/useRecentRepos";
+import iconUrl from "./assets/icon.svg";
 
 const INITIAL_FILTER: FilterState = {
   dateFrom: "",
@@ -165,6 +166,7 @@ function App() {
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* ヘッダー */}
           <div className="flex items-center justify-center mb-6 relative">
+            <img src={iconUrl} alt="CommitScope" className="w-9 h-9 mr-2" />
             <h1 className="text-3xl font-bold">CommitScope</h1>
             <button
               onClick={toggleTheme}
