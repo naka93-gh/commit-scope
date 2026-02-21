@@ -79,7 +79,7 @@ function App() {
   };
 
   return (
-    <div className={theme === THEME.DARK ? THEME.DARK : ""}>
+    <div className={theme === THEME.DARK ? "dark" : ""}>
       <div className="min-h-screen bg-cs-bg text-cs-text-primary font-sans">
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* ヘッダー */}
