@@ -23,11 +23,6 @@ export interface DirectoryStats {
   deletions: number;
 }
 
-export interface WordCount {
-  word: string;
-  count: number;
-}
-
 // week キーのキャッシュ（日付文字列 → 週開始日文字列）
 const weekKeyCache = new Map<string, string>();
 
@@ -202,35 +197,3 @@ export function aggregateDirectories(
     .sort((a, b) => b.commits - a.commits);
 }
 
-const STOP_WORDS = new Set([
-  "the", "a", "an", "in", "on", "at", "to", "for", "of", "and", "or",
-  "is", "it", "this", "that", "with", "from", "by", "as", "be", "was",
-  "are", "been", "not", "but", "if", "no", "do", "did", "has", "have",
-  "had", "will", "would", "can", "could", "should", "may", "might",
-  "up", "into", "out", "when", "we", "all", "so", "some",
-]);
-
-/** コミットメッセージの頻出語を抽出する */
-export function aggregateWords(
-  commits: CommitData[],
-  limit: number = 30,
-): WordCount[] {
-  const counter = new Map<string, number>();
-
-  for (const commit of commits) {
-    const words = commit.message
-      .toLowerCase()
-      .replace(/[^a-zA-Z0-9\u3000-\u9fff\uff00-\uffef ]/g, " ")
-      .split(/\s+/)
-      .filter((w) => w.length >= 2 && !STOP_WORDS.has(w));
-
-    for (const word of words) {
-      counter.set(word, (counter.get(word) ?? 0) + 1);
-    }
-  }
-
-  return [...counter.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([word, count]) => ({ word, count }));
-}

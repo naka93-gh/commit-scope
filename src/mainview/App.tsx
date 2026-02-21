@@ -5,7 +5,6 @@ import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
 import { HeatmapChart } from "./components/HeatmapChart";
 import { LinesChangedChart } from "./components/LinesChangedChart";
 import { DirectoryChart } from "./components/DirectoryChart";
-import { MessageAnalysis } from "./components/MessageAnalysis";
 import {
   FilterPanel,
   applyFilter,
@@ -28,7 +27,6 @@ const LOADING_STEPS = [
   { label: "ヒートマップを集計中" },
   { label: "変更行数を集計中" },
   { label: "ファイル集中度を集計中" },
-  { label: "メッセージを分析中" },
 ] as const;
 
 const STEPS_COUNT = LOADING_STEPS.length - 1; // streaming(0)を除いた集計ステップ数
@@ -47,7 +45,7 @@ function App() {
   const [commits, setCommits] = useState<CommitData[]>([]);
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
   const [error, setError] = useState<string | null>(null);
-  // null=非ロード, 0=streaming, 1-6=集計ステップ
+  // null=非ロード, 0=streaming, 1-5=集計ステップ
   const [loadingStep, setLoadingStep] = useState<number | null>(null);
   const [streamReceived, setStreamReceived] = useState(0);
   // どのコンポーネントまでマウント済みか (0=なし, 1=Filter, ..., 6=全部)
@@ -330,12 +328,7 @@ function App() {
                 <LinesChangedChart commits={filtered} />
               )}
               {(loadingStep === null || renderedUpTo >= 5) && (
-                <div className="grid grid-cols-2 gap-6">
-                  <DirectoryChart commits={filtered} />
-                  {(loadingStep === null || renderedUpTo >= 6) && (
-                    <MessageAnalysis commits={filtered} />
-                  )}
-                </div>
+                <DirectoryChart commits={filtered} />
               )}
             </div>
           )}
