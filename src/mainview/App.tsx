@@ -12,6 +12,7 @@ import {
   type FilterState,
 } from "./components/FilterPanel";
 import { THEME, THEME_STORAGE_KEY, type Theme } from "../shared/config";
+import { useRecentRepos } from "./hooks/useRecentRepos";
 
 const INITIAL_FILTER: FilterState = {
   dateFrom: "",
@@ -34,6 +35,7 @@ function App() {
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { repos: recentRepos, add: addRecentRepo, remove: removeRecentRepo } = useRecentRepos();
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -60,6 +62,12 @@ function App() {
     }
   };
 
+  const handleReset = () => {
+    setCommits([]);
+    setFilter(INITIAL_FILTER);
+    setError(null);
+  };
+
   const handleAnalyze = async () => {
     if (!repoPath.trim()) return;
 
@@ -71,6 +79,7 @@ function App() {
         path: repoPath.trim(),
       });
       setCommits(result);
+      addRecentRepo(repoPath.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -139,7 +148,64 @@ function App() {
             >
               {loading ? "解析中..." : "解析"}
             </button>
+            {commits.length > 0 && (
+              <button
+                onClick={handleReset}
+                className="px-3 py-2 bg-cs-surface border border-cs-border rounded-lg
+                           hover:bg-cs-surface-2 transition-colors text-cs-text-secondary shrink-0"
+                title="リポジトリを閉じる"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 5l8 8M13 5l-8 8" />
+                </svg>
+              </button>
+            )}
           </div>
+
+          {/* 最近開いたリポジトリ */}
+          {commits.length === 0 && recentRepos.length > 0 && (
+            <div className="mb-6 bg-cs-surface border border-cs-border rounded-xl p-4">
+              <h2 className="text-sm font-semibold text-cs-text-secondary mb-2">
+                最近開いたリポジトリ
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {recentRepos.map((repo) => (
+                  <div
+                    key={repo}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-cs-surface-2 border border-cs-border
+                               rounded-lg text-sm cursor-pointer hover:border-cs-primary transition-colors group"
+                  >
+                    <span
+                      onClick={() => setRepoPath(repo)}
+                      className="truncate max-w-[240px]"
+                      title={repo}
+                    >
+                      {repo}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRecentRepo(repo);
+                      }}
+                      className="ml-1 text-cs-text-tertiary hover:text-cs-error transition-colors shrink-0"
+                      title="履歴から削除"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* エラー表示 */}
           {error && (
