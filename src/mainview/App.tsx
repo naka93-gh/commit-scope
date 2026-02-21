@@ -4,7 +4,7 @@ import type { CommitData } from "../shared/types";
 import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
 import { HeatmapChart } from "./components/HeatmapChart";
 import { LinesChangedChart } from "./components/LinesChangedChart";
-import { DirectoryChart } from "./components/DirectoryChart";
+import { TerritoryChart } from "./components/TerritoryChart";
 import {
   FilterPanel,
   applyFilter,
@@ -26,7 +26,7 @@ const LOADING_STEPS = [
   { label: "コミット頻度を集計中" },
   { label: "ヒートマップを集計中" },
   { label: "変更行数を集計中" },
-  { label: "ファイル集中度を集計中" },
+  { label: "担当領域を集計中" },
 ] as const;
 
 const STEPS_COUNT = LOADING_STEPS.length - 1; // streaming(0)を除いた集計ステップ数
@@ -328,7 +328,7 @@ function App() {
                 <LinesChangedChart commits={filtered} />
               )}
               {(loadingStep === null || renderedUpTo >= 5) && (
-                <DirectoryChart commits={filtered} />
+                <TerritoryChart commits={filtered} />
               )}
             </div>
           )}

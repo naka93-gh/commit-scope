@@ -16,11 +16,9 @@ export interface LinesChangedPoint {
   deletions: number;
 }
 
-export interface DirectoryStats {
+export interface TerritoryPoint {
   directory: string;
-  commits: number;
-  additions: number;
-  deletions: number;
+  [author: string]: number | string;
 }
 
 // week キーのキャッシュ（日付文字列 → 週開始日文字列）
@@ -157,17 +155,27 @@ export function aggregateLinesChanged(
     .map(([date, v]) => ({ date, ...v }));
 }
 
-/** ディレクトリ別のコミット数・変更量を集計する */
-export function aggregateDirectories(
-  commits: CommitData[],
-  depth: number = 1,
-): DirectoryStats[] {
-  const map = new Map<
-    string,
-    { commitHashes: Set<string>; additions: number; deletions: number }
-  >();
+const MAX_DIRECTORIES = 15;
 
+/** コミッター別のディレクトリ変更割合を集計する */
+export function aggregateTerritory(
+  commits: CommitData[],
+  depth: number = 3,
+  selectedDirs?: Set<string>,
+): { data: TerritoryPoint[]; authors: string[]; allDirs: string[]; dirCounts: Map<string, number> } {
+  // 1. 著者別の総コミット数 → 上位 N 人を決定
+  const authorTotals = new Map<string, number>();
   for (const commit of commits) {
+    authorTotals.set(commit.author, (authorTotals.get(commit.author) ?? 0) + 1);
+  }
+  const sorted = [...authorTotals.entries()].sort((a, b) => b[1] - a[1]);
+  const topAuthors = new Set(sorted.slice(0, MAX_AUTHORS).map(([a]) => a));
+  const hasOthers = sorted.length > MAX_AUTHORS;
+
+  // 2. ディレクトリ × 著者のコミット数を集計（hash で重複排除）
+  const dirMap = new Map<string, Map<string, Set<string>>>();
+  for (const commit of commits) {
+    const author = topAuthors.has(commit.author) ? commit.author : OTHERS_LABEL;
     for (const file of commit.files) {
       const parts = file.path.split("/");
       const dir = parts.length > depth
@@ -176,24 +184,50 @@ export function aggregateDirectories(
           ? parts.slice(0, -1).join("/")
           : "(root)";
 
-      let entry = map.get(dir);
-      if (!entry) {
-        entry = { commitHashes: new Set(), additions: 0, deletions: 0 };
-        map.set(dir, entry);
+      let authorMap = dirMap.get(dir);
+      if (!authorMap) {
+        authorMap = new Map();
+        dirMap.set(dir, authorMap);
       }
-      entry.commitHashes.add(commit.hash);
-      entry.additions += file.additions;
-      entry.deletions += file.deletions;
+      let hashes = authorMap.get(author);
+      if (!hashes) {
+        hashes = new Set();
+        authorMap.set(author, hashes);
+      }
+      hashes.add(commit.hash);
     }
   }
 
-  return [...map.entries()]
-    .map(([directory, v]) => ({
-      directory,
-      commits: v.commitHashes.size,
-      additions: v.additions,
-      deletions: v.deletions,
-    }))
-    .sort((a, b) => b.commits - a.commits);
+  // 3. 全ディレクトリをコミット数降順でソート
+  const allDirTotals = [...dirMap.entries()]
+    .map(([dir, authorMap]) => {
+      let total = 0;
+      for (const hashes of authorMap.values()) total += hashes.size;
+      return { dir, authorMap, total };
+    })
+    .sort((a, b) => b.total - a.total);
+
+  const allDirs = allDirTotals.map(({ dir }) => dir);
+  const dirCounts = new Map(allDirTotals.map(({ dir, total }) => [dir, total]));
+
+  // 4. 表示対象ディレクトリを決定
+  const dirTotals = selectedDirs && selectedDirs.size > 0
+    ? allDirTotals.filter(({ dir }) => selectedDirs.has(dir))
+    : allDirTotals.slice(0, MAX_DIRECTORIES);
+
+  // 5. 著者リスト（コミット数順）
+  const authors = sorted.slice(0, MAX_AUTHORS).map(([a]) => a);
+  if (hasOthers) authors.push(OTHERS_LABEL);
+
+  // 6. TerritoryPoint[] に変換
+  const data: TerritoryPoint[] = dirTotals.map(({ dir, authorMap }) => {
+    const point: TerritoryPoint = { directory: dir };
+    for (const author of authors) {
+      point[author] = authorMap.get(author)?.size ?? 0;
+    }
+    return point;
+  });
+
+  return { data, authors, allDirs, dirCounts };
 }
 
