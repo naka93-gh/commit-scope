@@ -3,6 +3,9 @@ import type { CommitScopeRPC } from "../shared/types";
 import { RPC_MAX_REQUEST_TIME } from "../shared/config";
 import { getCommits } from "./git-log-parser";
 import { initApplicationMenu } from "./app-menu";
+import { createLogger } from "./logger";
+
+const logger = await createLogger();
 
 const DEV_SERVER_PORT = 5173;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
@@ -13,10 +16,10 @@ async function getMainViewUrl(): Promise<string> {
   if (channel === "dev") {
     try {
       await fetch(DEV_SERVER_URL, { method: "HEAD" });
-      console.log(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
+      logger.info(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
       return DEV_SERVER_URL;
     } catch {
-      console.log(
+      logger.info(
         "Vite dev server not running. Run 'bun run dev:hmr' for HMR support.",
       );
     }
@@ -41,9 +44,9 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
       },
       /** 指定パスの Git リポジトリを解析し、コミット一覧を返す */
       analyzeRepository: async ({ path }) => {
-        console.log(`Analyzing repository: ${path}`);
+        logger.debug(`Analyzing repository: ${path}`);
         const commits = await getCommits(path);
-        console.log(`Found ${commits.length} commits`);
+        logger.debug(`Found ${commits.length} commits`);
         return commits;
       },
     },
@@ -75,4 +78,4 @@ export const mainWindow = new BrowserWindow({
 /** アプリケーションメニューの初期化 */
 initApplicationMenu();
 
-console.log("CommitScope started!");
+logger.info("CommitScope started!");
