@@ -124,7 +124,6 @@ function App() {
               type="text"
               value={repoPath}
               onChange={(e) => setRepoPath(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
               placeholder="リポジトリのパスを入力、または左のボタンで選択"
               className="flex-1 px-4 py-2 bg-cs-surface border border-cs-border rounded-lg
                          text-cs-text-primary placeholder-cs-text-tertiary

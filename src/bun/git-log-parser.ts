@@ -1,3 +1,5 @@
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 import type { CommitData, FileChange } from "../shared/types";
 
 const SEPARATOR = "---COMMIT_END---";
@@ -9,8 +11,34 @@ const FORMAT = [
   "Message:%s",
 ].join("%n");
 
+/** 指定パスが有効な Git リポジトリか検証する */
+async function validateRepoPath(repoPath: string): Promise<void> {
+  let dirStat;
+  try {
+    dirStat = await stat(repoPath);
+  } catch {
+    throw new Error(`パスが見つかりません: ${repoPath}`);
+  }
+
+  if (!dirStat.isDirectory()) {
+    throw new Error(`ディレクトリではありません: ${repoPath}`);
+  }
+
+  try {
+    const gitStat = await stat(join(repoPath, ".git"));
+    if (!gitStat.isDirectory()) {
+      throw new Error(`Git リポジトリではありません: ${repoPath}`);
+    }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("Git リポジトリ")) throw e;
+    throw new Error(`Git リポジトリではありません: ${repoPath}`);
+  }
+}
+
 /** git log を実行してコミットデータをパースする */
 export async function getCommits(repoPath: string): Promise<CommitData[]> {
+  await validateRepoPath(repoPath);
+
   const proc = Bun.spawn(
     [
       "git",
