@@ -6,6 +6,9 @@ export default {
     identifier: "commitscope.electrobun.dev",
     version: "0.0.1",
   },
+  runtime: {
+    exitOnLastWindowClosed: false,
+  },
   build: {
     copy: {
       "dist/index.html": "views/mainview/index.html",

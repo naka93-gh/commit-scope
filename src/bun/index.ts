@@ -2,10 +2,12 @@ import { BrowserWindow, BrowserView, Updater, Utils } from "electrobun/bun";
 import type { CommitScopeRPC } from "../shared/types";
 import { RPC_MAX_REQUEST_TIME } from "../shared/config";
 import { getCommits } from "./git-log-parser";
+import { initApplicationMenu } from "./app-menu";
 
 const DEV_SERVER_PORT = 5173;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
+/** dev チャンネル時は Vite dev server を優先し、なければビルド済みファイルを使用 */
 async function getMainViewUrl(): Promise<string> {
   const channel = await Updater.localInfo.channel();
   if (channel === "dev") {
@@ -22,10 +24,12 @@ async function getMainViewUrl(): Promise<string> {
   return "views://mainview/index.html";
 }
 
+/** Renderer ↔ Main 間の RPC ハンドラ定義 */
 const rpc = BrowserView.defineRPC<CommitScopeRPC>({
   maxRequestTime: RPC_MAX_REQUEST_TIME,
   handlers: {
     requests: {
+      /** フォルダ選択ダイアログを表示し、選択パスを返す */
       selectRepository: async ({ startingFolder }) => {
         const paths = await Utils.openFileDialog({
           canChooseFiles: false,
@@ -35,6 +39,7 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
         });
         return paths.length > 0 ? paths[0] : null;
       },
+      /** 指定パスの Git リポジトリを解析し、コミット一覧を返す */
       analyzeRepository: async ({ path }) => {
         console.log(`Analyzing repository: ${path}`);
         const commits = await getCommits(path);
@@ -46,9 +51,11 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
   },
 });
 
+/** メインウィンドウの生成 */
 const url = await getMainViewUrl();
 
-const mainWindow = new BrowserWindow({
+// Dock クリック対応時に mainWindow.show() で使用予定
+export const mainWindow = new BrowserWindow({
   title: "CommitScope",
   url,
   rpc,
@@ -60,8 +67,12 @@ const mainWindow = new BrowserWindow({
   },
 });
 
-mainWindow.on("close", () => {
-  Utils.quit();
-});
+// macOS 標準挙動: × ボタンではウィンドウを閉じるだけでアプリは終了しない
+// 完全終了は Cmd+Q またはメニューの「CommitScope を終了」から
+// TODO: Dock クリックでウィンドウを再表示する (hide/show + reopen イベントが必要)
+// https://github.com/blackboardsh/electrobun/issues/69
+
+/** アプリケーションメニューの初期化 */
+initApplicationMenu();
 
 console.log("CommitScope started!");
