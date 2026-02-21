@@ -3,7 +3,7 @@ import type { ElectrobunConfig } from "electrobun";
 export default {
   app: {
     name: "CommitScope",
-    identifier: "commitscope.electrobun.dev",
+    identifier: "dev.naka.commitscope",
     version: "0.0.1",
   },
   runtime: {
