@@ -45,6 +45,19 @@ function App() {
     [commits, filter],
   );
 
+  const handleSelectFolder = async () => {
+    try {
+      const path = await rpc.request.selectRepository({
+        startingFolder: repoPath.trim() || undefined,
+      });
+      if (path) {
+        setRepoPath(path);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!repoPath.trim()) return;
 
@@ -81,13 +94,23 @@ function App() {
           </div>
 
           {/* リポジトリパス入力 */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={handleSelectFolder}
+              className="px-3 py-2 bg-cs-surface border border-cs-border rounded-lg
+                         hover:bg-cs-surface-2 transition-colors text-cs-text-secondary shrink-0"
+              title="フォルダを選択"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 5a1 1 0 0 1 1-1h4l2 2h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" />
+              </svg>
+            </button>
             <input
               type="text"
               value={repoPath}
               onChange={(e) => setRepoPath(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-              placeholder="リポジトリのパスを入力（例: /Users/you/project）"
+              placeholder="リポジトリのパスを入力、または左のボタンで選択"
               className="flex-1 px-4 py-2 bg-cs-surface border border-cs-border rounded-lg
                          text-cs-text-primary placeholder-cs-text-tertiary
                          focus:outline-none focus:border-cs-primary transition-colors"

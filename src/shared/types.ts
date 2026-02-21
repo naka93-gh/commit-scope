@@ -19,6 +19,10 @@ export interface CommitData {
 export type CommitScopeRPC = {
   bun: {
     requests: {
+      selectRepository: {
+        params: { startingFolder?: string };
+        response: string | null;
+      };
       analyzeRepository: {
         params: { path: string };
         response: CommitData[];
