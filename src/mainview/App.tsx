@@ -11,6 +11,7 @@ import {
   applyFilter,
   type FilterState,
 } from "./components/FilterPanel";
+import { THEME, THEME_STORAGE_KEY, type Theme } from "../shared/config";
 
 const INITIAL_FILTER: FilterState = {
   dateFrom: "",
@@ -18,16 +19,16 @@ const INITIAL_FILTER: FilterState = {
   selectedAuthors: new Set(),
 };
 
-function getInitialTheme(): "light" | "dark" {
+function getInitialTheme(): Theme {
   try {
-    const stored = localStorage.getItem("cs-theme");
-    if (stored === "light" || stored === "dark") return stored;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === THEME.LIGHT || stored === THEME.DARK) return stored;
   } catch {}
-  return "dark";
+  return THEME.DARK;
 }
 
 function App() {
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [repoPath, setRepoPath] = useState("");
   const [commits, setCommits] = useState<CommitData[]>([]);
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
@@ -35,10 +36,11 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem("cs-theme", theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+  const toggleTheme = () =>
+    setTheme((t) => (t === THEME.DARK ? THEME.LIGHT : THEME.DARK));
 
   const filtered = useMemo(
     () => applyFilter(commits, filter),
@@ -77,7 +79,7 @@ function App() {
   };
 
   return (
-    <div className={theme === "dark" ? "dark" : ""}>
+    <div className={theme === THEME.DARK ? THEME.DARK : ""}>
       <div className="min-h-screen bg-cs-bg text-cs-text-primary font-sans">
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* ヘッダー */}
@@ -87,9 +89,13 @@ function App() {
               onClick={toggleTheme}
               className="absolute right-0 p-2 rounded-lg bg-cs-surface border border-cs-border
                          hover:bg-cs-surface-2 transition-colors text-sm"
-              title={theme === "dark" ? "ライトモードに切替" : "ダークモードに切替"}
+              title={
+                theme === THEME.DARK
+                  ? "ライトモードに切替"
+                  : "ダークモードに切替"
+              }
             >
-              {theme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19"}
+              {theme === THEME.DARK ? "\u2600\uFE0F" : "\uD83C\uDF19"}
             </button>
           </div>
 
@@ -101,7 +107,16 @@ function App() {
                          hover:bg-cs-surface-2 transition-colors text-cs-text-secondary shrink-0"
               title="フォルダを選択"
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M2 5a1 1 0 0 1 1-1h4l2 2h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" />
               </svg>
             </button>
