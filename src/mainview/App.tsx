@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { rpc } from "./rpc";
 import type { CommitData } from "../shared/types";
 import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
@@ -20,6 +20,18 @@ const INITIAL_FILTER: FilterState = {
   selectedAuthors: new Set(),
 };
 
+const LOADING_STEPS = [
+  { label: "コミットを取得中" },
+  { label: "フィルターを集計中" },
+  { label: "コミット頻度を集計中" },
+  { label: "ヒートマップを集計中" },
+  { label: "変更行数を集計中" },
+  { label: "ファイル集中度を集計中" },
+  { label: "メッセージを分析中" },
+] as const;
+
+const STEPS_COUNT = LOADING_STEPS.length - 1; // streaming(0)を除いた集計ステップ数
+
 function getInitialTheme(): Theme {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -33,13 +45,70 @@ function App() {
   const [repoPath, setRepoPath] = useState("");
   const [commits, setCommits] = useState<CommitData[]>([]);
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // null=非ロード, 0=streaming, 1-6=集計ステップ
+  const [loadingStep, setLoadingStep] = useState<number | null>(null);
+  const [streamReceived, setStreamReceived] = useState(0);
+  // どのコンポーネントまでマウント済みか (0=なし, 1=Filter, ..., 6=全部)
+  const [renderedUpTo, setRenderedUpTo] = useState(0);
   const { repos: recentRepos, add: addRecentRepo, remove: removeRecentRepo } = useRecentRepos();
+
+  // ストリーム中に蓄積するための ref（チャンク受信ごとに新配列を生成するのを避ける）
+  const commitsRef = useRef<CommitData[]>([]);
+  const analyzePathRef = useRef("");
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  // ストリーミングメッセージのリスナ登録
+  useEffect(() => {
+    const onChunk = ({ commits: chunk, progress }: { commits: CommitData[]; progress: number }) => {
+      for (const c of chunk) commitsRef.current.push(c);
+      setStreamReceived(progress);
+    };
+
+    const onEnd = () => {
+      setCommits(commitsRef.current);
+      setLoadingStep(1); // 集計フェーズへ遷移
+    };
+
+    const onError = ({ message }: { message: string }) => {
+      setLoadingStep(null);
+      setError(message);
+    };
+
+    rpc.addMessageListener("commitChunk", onChunk);
+    rpc.addMessageListener("commitStreamEnd", onEnd);
+    rpc.addMessageListener("commitStreamError", onError);
+
+    return () => {
+      rpc.removeMessageListener("commitChunk", onChunk);
+      rpc.removeMessageListener("commitStreamEnd", onEnd);
+      rpc.removeMessageListener("commitStreamError", onError);
+    };
+  }, []);
+
+  // loadingStep が変わったら → ラベル描画後に対応コンポーネントをマウント
+  useEffect(() => {
+    if (loadingStep === null || loadingStep < 1 || loadingStep > STEPS_COUNT) return;
+    const raf = requestAnimationFrame(() => setRenderedUpTo(loadingStep));
+    return () => cancelAnimationFrame(raf);
+  }, [loadingStep]);
+
+  // コンポーネントがマウントされたら → 次のステップへ or 完了
+  useEffect(() => {
+    if (renderedUpTo < 1) return;
+    if (renderedUpTo >= STEPS_COUNT) {
+      const raf = requestAnimationFrame(() => {
+        setLoadingStep(null);
+        addRecentRepo(analyzePathRef.current);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    const raf = requestAnimationFrame(() => setLoadingStep(renderedUpTo + 1));
+    return () => cancelAnimationFrame(raf);
+  }, [renderedUpTo, addRecentRepo]);
 
   const toggleTheme = () =>
     setTheme((t) => (t === THEME.DARK ? THEME.LIGHT : THEME.DARK));
@@ -64,26 +133,30 @@ function App() {
 
   const handleReset = () => {
     setCommits([]);
+    commitsRef.current = [];
     setFilter(INITIAL_FILTER);
     setError(null);
+    setLoadingStep(null);
+    setRenderedUpTo(0);
+    setStreamReceived(0);
   };
 
   const handleAnalyze = async () => {
     if (!repoPath.trim()) return;
 
-    setLoading(true);
+    setLoadingStep(0);
+    setStreamReceived(0);
+    setRenderedUpTo(0);
     setError(null);
+    setCommits([]);
+    commitsRef.current = [];
+    analyzePathRef.current = repoPath.trim();
 
     try {
-      const result = await rpc.request.analyzeRepository({
-        path: repoPath.trim(),
-      });
-      setCommits(result);
-      addRecentRepo(repoPath.trim());
+      await rpc.request.analyzeRepository({ path: repoPath.trim() });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
+      setLoadingStep(null);
     }
   };
 
@@ -140,13 +213,13 @@ function App() {
             />
             <button
               onClick={handleAnalyze}
-              disabled={loading || !repoPath.trim()}
+              disabled={loadingStep !== null || !repoPath.trim()}
               className="px-6 py-2 bg-cs-primary hover:bg-cs-primary-hover
                          disabled:bg-cs-surface-2 disabled:text-cs-text-tertiary
                          disabled:cursor-not-allowed rounded-lg font-semibold
                          text-white transition-colors"
             >
-              {loading ? "解析中..." : "解析"}
+              解析
             </button>
             {commits.length > 0 && (
               <button
@@ -214,45 +287,53 @@ function App() {
             </div>
           )}
 
-          {/* フィルター */}
-          {commits.length > 0 && (
-            <FilterPanel
-              commits={commits}
-              filter={filter}
-              onChange={setFilter}
-            />
+          {/* フィルター & サマリー (step 1) */}
+          {commits.length > 0 && (loadingStep === null || renderedUpTo >= 1) && (
+            <>
+              <FilterPanel
+                commits={commits}
+                filter={filter}
+                onChange={setFilter}
+              />
+              <div className="mb-6 grid grid-cols-3 gap-4">
+                <SummaryCard label="コミット数" value={filtered.length} />
+                <SummaryCard
+                  label="コミッター数"
+                  value={new Set(filtered.map((c) => c.email)).size}
+                />
+                <SummaryCard
+                  label="変更ファイル数"
+                  value={filtered.reduce((sum, c) => sum + c.files.length, 0)}
+                />
+              </div>
+            </>
           )}
 
-          {/* サマリー */}
-          {commits.length > 0 && (
-            <div className="mb-6 grid grid-cols-3 gap-4">
-              <SummaryCard label="コミット数" value={filtered.length} />
-              <SummaryCard
-                label="コミッター数"
-                value={new Set(filtered.map((c) => c.email)).size}
-              />
-              <SummaryCard
-                label="変更ファイル数"
-                value={filtered.reduce((sum, c) => sum + c.files.length, 0)}
-              />
-            </div>
-          )}
-
-          {/* ダッシュボード */}
+          {/* ダッシュボード (steps 2-6) */}
           {filtered.length > 0 && (
             <div className="space-y-6 mb-6">
-              <CommitFrequencyChart commits={filtered} />
-              <HeatmapChart commits={filtered} />
-              <LinesChangedChart commits={filtered} />
-              <div className="grid grid-cols-2 gap-6">
-                <DirectoryChart commits={filtered} />
-                <MessageAnalysis commits={filtered} />
-              </div>
+              {(loadingStep === null || renderedUpTo >= 2) && (
+                <CommitFrequencyChart commits={filtered} />
+              )}
+              {(loadingStep === null || renderedUpTo >= 3) && (
+                <HeatmapChart commits={filtered} />
+              )}
+              {(loadingStep === null || renderedUpTo >= 4) && (
+                <LinesChangedChart commits={filtered} />
+              )}
+              {(loadingStep === null || renderedUpTo >= 5) && (
+                <div className="grid grid-cols-2 gap-6">
+                  <DirectoryChart commits={filtered} />
+                  {(loadingStep === null || renderedUpTo >= 6) && (
+                    <MessageAnalysis commits={filtered} />
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {/* コミット一覧 */}
-          {filtered.length > 0 && (
+          {filtered.length > 0 && loadingStep === null && (
             <div className="space-y-2">
               <h2 className="text-xl font-semibold mb-3">
                 最近のコミット（{Math.min(filtered.length, 100)} / {filtered.length} 件）
@@ -262,6 +343,77 @@ function App() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* 読み込み中ダイアログ */}
+      {loadingStep !== null && (
+        <LoadingDialog
+          currentStep={loadingStep}
+          streamReceived={streamReceived}
+          onCancel={handleReset}
+        />
+      )}
+    </div>
+  );
+}
+
+function LoadingDialog({
+  currentStep,
+  streamReceived,
+  onCancel,
+}: {
+  currentStep: number;
+  streamReceived: number;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-cs-surface border border-cs-border rounded-2xl p-8 shadow-xl
+                      w-80 space-y-5">
+        <div className="space-y-2">
+          {LOADING_STEPS.map((step, i) => {
+            const isDone = i < currentStep;
+            const isActive = i === currentStep;
+            return (
+              <div key={i} className="flex items-center gap-3 text-sm">
+                {isDone ? (
+                  <span className="text-cs-success shrink-0">{"\u2713"}</span>
+                ) : isActive ? (
+                  <div className="w-4 h-4 border-2 border-cs-border border-t-cs-primary rounded-full animate-spin shrink-0" />
+                ) : (
+                  <span className="text-cs-text-tertiary shrink-0">{"\u25CB"}</span>
+                )}
+                <span
+                  className={
+                    isDone
+                      ? "text-cs-text-secondary"
+                      : isActive
+                        ? "text-cs-primary font-medium"
+                        : "text-cs-text-tertiary"
+                  }
+                >
+                  {step.label}
+                  {i === 0 && (isDone || isActive) && (
+                    <span className="ml-2 font-mono text-xs">
+                      ({streamReceived.toLocaleString()} 件)
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm text-cs-text-secondary hover:text-cs-text-primary
+                       bg-cs-surface-2 border border-cs-border rounded-lg
+                       hover:bg-cs-border transition-colors"
+          >
+            キャンセル
+          </button>
         </div>
       </div>
     </div>

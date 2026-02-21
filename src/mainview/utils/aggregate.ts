@@ -7,11 +7,8 @@ export interface FrequencyPoint {
   [author: string]: number | string;
 }
 
-export interface HeatmapCell {
-  day: number; // 0=月 ~ 6=日
-  hour: number; // 0~23
-  count: number;
-}
+/** 曜日(7) × 時間帯(24) のコミット数グリッド */
+export type HeatmapGrid = number[][];
 
 export interface LinesChangedPoint {
   date: string;
@@ -31,50 +28,90 @@ export interface WordCount {
   count: number;
 }
 
-/** 日付を指定単位のキーに変換する */
-function toDateKey(dateStr: string, unit: TimeUnit): string {
-  const d = new Date(dateStr);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+// week キーのキャッシュ（日付文字列 → 週開始日文字列）
+const weekKeyCache = new Map<string, string>();
 
+// 曜日キャッシュ（日付文字列 → 0=月〜6=日）
+const dowCache = new Map<string, number>();
+
+/** ISO 8601 日付文字列を指定単位のキーに変換する（Date 生成を最小化） */
+function toDateKey(dateStr: string, unit: TimeUnit): string {
   switch (unit) {
     case "day":
-      return `${year}-${month}-${day}`;
-    case "week": {
-      // 月曜始まりの週の開始日を算出
-      const dayOfWeek = d.getDay();
-      const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      const monday = new Date(d);
-      monday.setDate(d.getDate() - diff);
-      const wy = monday.getFullYear();
-      const wm = String(monday.getMonth() + 1).padStart(2, "0");
-      const wd = String(monday.getDate()).padStart(2, "0");
-      return `${wy}-${wm}-${wd}`;
-    }
+      return dateStr.slice(0, 10);
     case "month":
-      return `${year}-${month}`;
+      return dateStr.slice(0, 7);
+    case "week": {
+      const dayStr = dateStr.slice(0, 10);
+      let key = weekKeyCache.get(dayStr);
+      if (key !== undefined) return key;
+
+      const d = new Date(dayStr + "T00:00:00");
+      const dow = d.getDay();
+      const diff = dow === 0 ? 6 : dow - 1;
+      if (diff === 0) {
+        key = dayStr;
+      } else {
+        const monday = new Date(d);
+        monday.setDate(d.getDate() - diff);
+        const wy = monday.getFullYear();
+        const wm = String(monday.getMonth() + 1).padStart(2, "0");
+        const wd = String(monday.getDate()).padStart(2, "0");
+        key = `${wy}-${wm}-${wd}`;
+      }
+      weekKeyCache.set(dayStr, key);
+      return key;
+    }
   }
 }
 
-/** コミッター別のコミット頻度を集計する */
+/** ISO 8601 文字列から曜日(0=月〜6=日)を取得する（キャッシュ付き） */
+function getDayOfWeek(dateStr: string): number {
+  const dayStr = dateStr.slice(0, 10);
+  let day = dowCache.get(dayStr);
+  if (day !== undefined) return day;
+
+  const jsDay = new Date(dayStr + "T00:00:00").getDay();
+  day = jsDay === 0 ? 6 : jsDay - 1;
+  dowCache.set(dayStr, day);
+  return day;
+}
+
+const MAX_AUTHORS = 10;
+const OTHERS_LABEL = "Others";
+
+/** コミッター別のコミット頻度を集計する（上位 N 人 + Others） */
 export function aggregateFrequency(
   commits: CommitData[],
   unit: TimeUnit,
 ): { data: FrequencyPoint[]; authors: string[] } {
-  const authorSet = new Set<string>();
-  const map = new Map<string, Map<string, number>>();
-
+  // 1. コミッター別の総コミット数をカウント
+  const authorTotals = new Map<string, number>();
   for (const commit of commits) {
-    const key = toDateKey(commit.date, unit);
-    authorSet.add(commit.author);
-
-    if (!map.has(key)) map.set(key, new Map());
-    const authorMap = map.get(key)!;
-    authorMap.set(commit.author, (authorMap.get(commit.author) ?? 0) + 1);
+    authorTotals.set(commit.author, (authorTotals.get(commit.author) ?? 0) + 1);
   }
 
-  const authors = [...authorSet];
+  // 2. 上位 N 人を決定
+  const sorted = [...authorTotals.entries()].sort((a, b) => b[1] - a[1]);
+  const topAuthors = new Set(sorted.slice(0, MAX_AUTHORS).map(([a]) => a));
+  const hasOthers = sorted.length > MAX_AUTHORS;
+
+  // 3. 時系列集計（上位以外は Others にまとめる）
+  const map = new Map<string, Map<string, number>>();
+  for (const commit of commits) {
+    const key = toDateKey(commit.date, unit);
+    const author = topAuthors.has(commit.author) ? commit.author : OTHERS_LABEL;
+
+    let authorMap = map.get(key);
+    if (!authorMap) {
+      authorMap = new Map();
+      map.set(key, authorMap);
+    }
+    authorMap.set(author, (authorMap.get(author) ?? 0) + 1);
+  }
+
+  const authors = sorted.slice(0, MAX_AUTHORS).map(([a]) => a);
+  if (hasOthers) authors.push(OTHERS_LABEL);
   const sortedKeys = [...map.keys()].sort();
 
   const data: FrequencyPoint[] = sortedKeys.map((key) => {
@@ -89,25 +126,15 @@ export function aggregateFrequency(
   return { data, authors };
 }
 
-/** 曜日×時間帯のコミット分布を集計する */
-export function aggregateHeatmap(commits: CommitData[]): HeatmapCell[] {
+/** 曜日×時間帯のコミット分布を集計する（7×24 の 2D 配列を返す） */
+export function aggregateHeatmap(commits: CommitData[]): HeatmapGrid {
   const grid: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
-
   for (const commit of commits) {
-    const d = new Date(commit.date);
-    const jsDay = d.getDay(); // 0=日
-    const day = jsDay === 0 ? 6 : jsDay - 1; // 0=月
-    const hour = d.getHours();
+    const day = getDayOfWeek(commit.date);
+    const hour = parseInt(commit.date.slice(11, 13), 10);
     grid[day][hour]++;
   }
-
-  const cells: HeatmapCell[] = [];
-  for (let day = 0; day < 7; day++) {
-    for (let hour = 0; hour < 24; hour++) {
-      cells.push({ day, hour, count: grid[day][hour] });
-    }
-  }
-  return cells;
+  return grid;
 }
 
 /** 追加/削除行数の時系列推移を集計する */
@@ -119,8 +146,11 @@ export function aggregateLinesChanged(
 
   for (const commit of commits) {
     const key = toDateKey(commit.date, unit);
-    if (!map.has(key)) map.set(key, { additions: 0, deletions: 0 });
-    const entry = map.get(key)!;
+    let entry = map.get(key);
+    if (!entry) {
+      entry = { additions: 0, deletions: 0 };
+      map.set(key, entry);
+    }
     for (const f of commit.files) {
       entry.additions += f.additions;
       entry.deletions += f.deletions;
@@ -151,10 +181,11 @@ export function aggregateDirectories(
           ? parts.slice(0, -1).join("/")
           : "(root)";
 
-      if (!map.has(dir)) {
-        map.set(dir, { commitHashes: new Set(), additions: 0, deletions: 0 });
+      let entry = map.get(dir);
+      if (!entry) {
+        entry = { commitHashes: new Set(), additions: 0, deletions: 0 };
+        map.set(dir, entry);
       }
-      const entry = map.get(dir)!;
       entry.commitHashes.add(commit.hash);
       entry.additions += file.additions;
       entry.deletions += file.deletions;

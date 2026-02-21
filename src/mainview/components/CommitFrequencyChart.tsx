@@ -70,6 +70,7 @@ export function CommitFrequencyChart({ commits }: Props) {
               dataKey={author}
               stackId="commits"
               fill={CHART_COLORS[i % CHART_COLORS.length]}
+              isAnimationActive={false}
             />
           ))}
         </BarChart>

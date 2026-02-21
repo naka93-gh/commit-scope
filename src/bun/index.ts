@@ -1,7 +1,13 @@
 import { BrowserWindow, BrowserView, Updater, Utils } from "electrobun/bun";
-import type { CommitScopeRPC } from "../shared/types";
+import type { CommitScopeRPC, CommitData } from "../shared/types";
 import { RPC_MAX_REQUEST_TIME } from "../shared/config";
-import { getCommits } from "./git-log-parser";
+import {
+  validateRepoPath,
+  streamCommits,
+  getHeadHash,
+  isAncestor,
+} from "./git-log-parser";
+import { readCache, writeCache } from "./cache";
 import { initApplicationMenu } from "./app-menu";
 import { createLogger } from "./logger";
 
@@ -42,12 +48,58 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
         });
         return paths.length > 0 ? paths[0] : null;
       },
-      /** 指定パスの Git リポジトリを解析し、コミット一覧を返す */
+      /** 指定パスの Git リポジトリを解析開始（ストリーミング） */
       analyzeRepository: async ({ path }) => {
         logger.debug(`Analyzing repository: ${path}`);
-        const commits = await getCommits(path);
-        logger.debug(`Found ${commits.length} commits`);
-        return commits;
+        await validateRepoPath(path);
+
+        const head = await getHeadHash(path);
+        const cache = await readCache(path);
+
+        // (A) キャッシュヒット: HEAD が同一ならキャッシュから即座に返す
+        if (cache && cache.headHash === head) {
+          logger.debug(`Cache hit: ${cache.commits.length} commits`);
+          rpc.send.commitChunk({
+            commits: cache.commits,
+            progress: cache.commits.length,
+          });
+          rpc.send.commitStreamEnd({ total: cache.commits.length });
+          return;
+        }
+
+        // (B) 差分取得 or (C) フル取得
+        const incremental =
+          cache !== null && (await isAncestor(path, cache.headHash));
+        const allCommits: CommitData[] = [];
+
+        streamCommits(
+          path,
+          (commits, progress) => {
+            for (const c of commits) allCommits.push(c);
+            rpc.send.commitChunk({ commits, progress });
+          },
+          incremental ? cache!.headHash : undefined,
+        )
+          .then((streamedCount) => {
+            if (incremental && cache) {
+              allCommits.push(...cache.commits);
+              rpc.send.commitChunk({
+                commits: cache.commits,
+                progress: streamedCount + cache.commits.length,
+              });
+            }
+            const total = allCommits.length;
+            logger.debug(
+              `Stream complete: ${total} commits (${incremental ? "incremental" : "full"})`,
+            );
+            rpc.send.commitStreamEnd({ total });
+            writeCache(path, head, allCommits).catch(() => {});
+          })
+          .catch((e) => {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.debug(`Stream error: ${message}`);
+            rpc.send.commitStreamError({ message });
+          });
       },
     },
     messages: {},

@@ -25,13 +25,17 @@ export type CommitScopeRPC = {
       };
       analyzeRepository: {
         params: { path: string };
-        response: CommitData[];
+        response: void;
       };
     };
     messages: {};
   };
   webview: {
     requests: {};
-    messages: {};
+    messages: {
+      commitChunk: { commits: CommitData[]; progress: number };
+      commitStreamEnd: { total: number };
+      commitStreamError: { message: string };
+    };
   };
 };

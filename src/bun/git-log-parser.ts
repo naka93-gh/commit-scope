@@ -11,8 +11,10 @@ const FORMAT = [
   "Message:%s",
 ].join("%n");
 
+const STREAM_CHUNK_SIZE = 100;
+
 /** 指定パスが有効な Git リポジトリか検証する */
-async function validateRepoPath(repoPath: string): Promise<void> {
+export async function validateRepoPath(repoPath: string): Promise<void> {
   let dirStat;
   try {
     dirStat = await stat(repoPath);
@@ -35,49 +37,105 @@ async function validateRepoPath(repoPath: string): Promise<void> {
   }
 }
 
-/** git log を実行してコミットデータをパースする */
-export async function getCommits(repoPath: string): Promise<CommitData[]> {
-  await validateRepoPath(repoPath);
-
-  const proc = Bun.spawn(
-    [
-      "git",
-      "log",
-      `--format=${FORMAT}%n${SEPARATOR}`,
-      "--numstat",
-    ],
-    {
-      cwd: repoPath,
-      stdout: "pipe",
-      stderr: "pipe",
-    },
-  );
-
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
+/** HEAD のコミットハッシュを取得 */
+export async function getHeadHash(repoPath: string): Promise<string> {
+  const proc = Bun.spawn(["git", "rev-parse", "HEAD"], {
+    cwd: repoPath,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const text = await new Response(proc.stdout).text();
   const exitCode = await proc.exited;
-
   if (exitCode !== 0) {
+    throw new Error("git rev-parse HEAD failed");
+  }
+  return text.trim();
+}
+
+/** hash が HEAD の祖先かどうか判定 */
+export async function isAncestor(
+  repoPath: string,
+  hash: string,
+): Promise<boolean> {
+  const proc = Bun.spawn(["git", "merge-base", "--is-ancestor", hash, "HEAD"], {
+    cwd: repoPath,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const exitCode = await proc.exited;
+  return exitCode === 0;
+}
+
+/** git log をストリーミングでパースし、チャンクごとに onChunk を発火する */
+export async function streamCommits(
+  repoPath: string,
+  onChunk: (commits: CommitData[], progress: number) => void,
+  since?: string,
+): Promise<number> {
+  const args = ["git", "log", `--format=${FORMAT}%n${SEPARATOR}`, "--numstat"];
+  if (since) args.push(`${since}..HEAD`);
+
+  const proc = Bun.spawn(args, {
+    cwd: repoPath,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  const reader = proc.stdout.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: false });
+
+  let remainder = "";
+  let totalParsed = 0;
+  let buffer: CommitData[] = [];
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const text = remainder + decoder.decode(value, { stream: true });
+    const parts = text.split(SEPARATOR);
+
+    // 最後の要素は不完全な可能性があるので remainder に回す
+    remainder = parts.pop()!;
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+
+      const commit = parseCommitBlock(trimmed);
+      if (commit) {
+        buffer.push(commit);
+        if (buffer.length >= STREAM_CHUNK_SIZE) {
+          totalParsed += buffer.length;
+          onChunk(buffer, totalParsed);
+          buffer = [];
+        }
+      }
+    }
+  }
+
+  // ストリーム終了後: remainder をフラッシュ
+  const finalText = remainder + decoder.decode();
+  const finalTrimmed = finalText.trim();
+  if (finalTrimmed) {
+    const commit = parseCommitBlock(finalTrimmed);
+    if (commit) buffer.push(commit);
+  }
+
+  // 残りの端数を送信
+  if (buffer.length > 0) {
+    totalParsed += buffer.length;
+    onChunk(buffer, totalParsed);
+  }
+
+  // プロセス終了を待ってエラーチェック
+  const exitCode = await proc.exited;
+  if (exitCode !== 0) {
+    const stderr = await new Response(proc.stderr).text();
     throw new Error(`git log failed: ${stderr}`);
   }
 
-  return parseGitLog(stdout);
-}
-
-/** git log の出力テキストを CommitData[] にパースする */
-function parseGitLog(output: string): CommitData[] {
-  const commits: CommitData[] = [];
-  const blocks = output.split(SEPARATOR);
-
-  for (const block of blocks) {
-    const trimmed = block.trim();
-    if (!trimmed) continue;
-
-    const commit = parseCommitBlock(trimmed);
-    if (commit) commits.push(commit);
-  }
-
-  return commits;
+  return totalParsed;
 }
 
 /** 1コミット分のブロックをパースする */

@@ -67,6 +67,7 @@ export function LinesChangedChart({ commits }: Props) {
             stroke="var(--cs-success)"
             fill="var(--cs-success)"
             fillOpacity={0.6}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -76,6 +77,7 @@ export function LinesChangedChart({ commits }: Props) {
             stroke="var(--cs-error)"
             fill="var(--cs-error)"
             fillOpacity={0.6}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>

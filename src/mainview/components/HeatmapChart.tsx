@@ -11,8 +11,16 @@ interface Props {
 }
 
 export function HeatmapChart({ commits }: Props) {
-  const cells = useMemo(() => aggregateHeatmap(commits), [commits]);
-  const maxCount = Math.max(...cells.map((c) => c.count), 1);
+  const grid = useMemo(() => aggregateHeatmap(commits), [commits]);
+  const maxCount = useMemo(() => {
+    let max = 1;
+    for (const row of grid) {
+      for (const v of row) {
+        if (v > max) max = v;
+      }
+    }
+    return max;
+  }, [grid]);
 
   return (
     <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
@@ -51,10 +59,7 @@ export function HeatmapChart({ commits }: Props) {
                 {label}
               </text>
               {Array.from({ length: 24 }, (_, hour) => {
-                const cell = cells.find(
-                  (c) => c.day === day && c.hour === hour,
-                );
-                const count = cell?.count ?? 0;
+                const count = grid[day][hour];
                 const intensity = count / maxCount;
                 return (
                   <rect

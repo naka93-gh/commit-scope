@@ -45,9 +45,9 @@ export function DirectoryChart({ commits }: Props) {
           />
           <Tooltip {...TOOLTIP_STYLE} />
           <Legend />
-          <Bar dataKey="commits" name="コミット数" fill="var(--cs-primary)" />
-          <Bar dataKey="additions" name="追加行" fill="var(--cs-success)" />
-          <Bar dataKey="deletions" name="削除行" fill="var(--cs-error)" />
+          <Bar dataKey="commits" name="コミット数" fill="var(--cs-primary)" isAnimationActive={false} />
+          <Bar dataKey="additions" name="追加行" fill="var(--cs-success)" isAnimationActive={false} />
+          <Bar dataKey="deletions" name="削除行" fill="var(--cs-error)" isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>

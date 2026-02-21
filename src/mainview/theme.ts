@@ -19,6 +19,9 @@ export const TOOLTIP_STYLE = {
   labelStyle: {
     color: "var(--cs-text-primary)",
   },
+  wrapperStyle: {
+    zIndex: 10,
+  },
 };
 
 export const GRID_STROKE = "var(--cs-border-subtle)";
