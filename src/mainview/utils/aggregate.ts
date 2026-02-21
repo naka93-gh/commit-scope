@@ -157,6 +157,55 @@ export function aggregateLinesChanged(
 
 const MAX_DIRECTORIES = 15;
 
+export interface ActivityCalendarDay {
+  date: string; // "YYYY-MM-DD"
+  count: number;
+}
+
+/** 最新コミット日から過去1年分の日別コミット数を集計する（週の開始=日曜に揃える） */
+export function aggregateActivityCalendar(
+  commits: CommitData[],
+): ActivityCalendarDay[] {
+  if (commits.length === 0) return [];
+
+  // 最新日を特定
+  let latestStr = commits[0].date.slice(0, 10);
+  for (const c of commits) {
+    const d = c.date.slice(0, 10);
+    if (d > latestStr) latestStr = d;
+  }
+
+  // 日別カウント
+  const countMap = new Map<string, number>();
+  for (const c of commits) {
+    const key = c.date.slice(0, 10);
+    countMap.set(key, (countMap.get(key) ?? 0) + 1);
+  }
+
+  // 最新日の週末（土曜日）を終端にする
+  const latest = new Date(latestStr + "T00:00:00");
+  const latestDow = latest.getDay(); // 0=日
+  const endDate = new Date(latest);
+  endDate.setDate(latest.getDate() + (6 - latestDow));
+
+  // 終端から53週分遡って日曜始まりにする
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - 53 * 7 + 1);
+
+  const result: ActivityCalendarDay[] = [];
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    const y = cursor.getFullYear();
+    const m = String(cursor.getMonth() + 1).padStart(2, "0");
+    const d = String(cursor.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${d}`;
+    result.push({ date: key, count: countMap.get(key) ?? 0 });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return result;
+}
+
 /** コミッター別のディレクトリ変更割合を集計する */
 export function aggregateTerritory(
   commits: CommitData[],

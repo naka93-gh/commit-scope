@@ -5,6 +5,7 @@ import { CommitFrequencyChart } from "./components/CommitFrequencyChart";
 import { HeatmapChart } from "./components/HeatmapChart";
 import { LinesChangedChart } from "./components/LinesChangedChart";
 import { TerritoryChart } from "./components/TerritoryChart";
+import { ActivityCalendarChart } from "./components/ActivityCalendarChart";
 import {
   FilterPanel,
   applyFilter,
@@ -26,6 +27,7 @@ const LOADING_STEPS = [
   { label: "フィルターを集計中" },
   { label: "コミット頻度を集計中" },
   { label: "ヒートマップを集計中" },
+  { label: "活動カレンダーを集計中" },
   { label: "変更行数を集計中" },
   { label: "担当領域を集計中" },
 ] as const;
@@ -327,9 +329,12 @@ function App() {
                 <HeatmapChart commits={filtered} />
               )}
               {(loadingStep === null || renderedUpTo >= 4) && (
-                <LinesChangedChart commits={filtered} />
+                <ActivityCalendarChart commits={filtered} />
               )}
               {(loadingStep === null || renderedUpTo >= 5) && (
+                <LinesChangedChart commits={filtered} />
+              )}
+              {(loadingStep === null || renderedUpTo >= 6) && (
                 <TerritoryChart commits={filtered} />
               )}
             </div>

@@ -98,12 +98,9 @@ export function HeatmapChart({ commits }: Props) {
   );
 }
 
-/** primary カラーベースのグラデーション */
+/** CSS変数ベースのグラデーション（テーマ自動対応） */
 function intensityToColor(intensity: number): string {
   if (intensity === 0) return "var(--cs-surface-2)";
-  // #2E1A28 (primarySubtle) → #C74B8A (primary) のグラデーション
-  const r = Math.round(46 + intensity * (199 - 46));
-  const g = Math.round(26 + intensity * (75 - 26));
-  const b = Math.round(40 + intensity * (138 - 40));
-  return `rgb(${r}, ${g}, ${b})`;
+  const pct = Math.round(20 + intensity * 80);
+  return `color-mix(in srgb, var(--cs-primary) ${pct}%, var(--cs-surface-2))`;
 }
