@@ -20,26 +20,27 @@ function buildTree(allDirs: string[], dirCounts: Map<string, number>): TreeNode[
   const rootChildren: TreeNode[] = [];
   const nodeMap = new Map<string, TreeNode>();
 
-  const getOrCreate = (path: string, name: string): TreeNode => {
-    let node = nodeMap.get(path);
-    if (!node) {
-      node = {
-        name,
-        path,
-        count: dirCounts.get(path) ?? 0,
-        isDataNode: false,
-        children: [],
-      };
-      nodeMap.set(path, node);
-    }
-    return node;
+  /** ノードを取得または新規作成する。created が true なら新規作成 */
+  const getOrCreate = (path: string, name: string): { node: TreeNode; created: boolean } => {
+    const existing = nodeMap.get(path);
+    if (existing) return { node: existing, created: false };
+
+    const node: TreeNode = {
+      name,
+      path,
+      count: dirCounts.get(path) ?? 0,
+      isDataNode: false,
+      children: [],
+    };
+    nodeMap.set(path, node);
+    return { node, created: true };
   };
 
   for (const dir of allDirs) {
     if (dir === "(root)") {
-      const node = getOrCreate(dir, dir);
+      const { node, created } = getOrCreate(dir, dir);
       node.isDataNode = true;
-      if (!rootChildren.includes(node)) rootChildren.push(node);
+      if (created) rootChildren.push(node);
       continue;
     }
 
@@ -48,9 +49,9 @@ function buildTree(allDirs: string[], dirCounts: Map<string, number>): TreeNode[
 
     for (let i = 0; i < segments.length; i++) {
       const path = segments.slice(0, i + 1).join("/");
-      const node = getOrCreate(path, segments[i]);
+      const { node, created } = getOrCreate(path, segments[i]);
 
-      if (!parentList.includes(node)) {
+      if (created) {
         parentList.push(node);
       }
 
