@@ -1,17 +1,17 @@
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { rpc } from "../../rpc";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CommitData } from "../../../shared/types";
+import { useRecentRepos } from "../../hooks/useRecentRepos";
+import { rpc } from "../../rpc";
+import { ActivityCalendarChart } from "./parts/ActivityCalendarChart";
+import { BranchOverviewCard } from "./parts/BranchOverviewCard";
 import { CommitFrequencyChart } from "./parts/CommitFrequencyChart";
+import { CommitRow } from "./parts/CommitRow";
+import { applyFilter, FilterPanel, type FilterState } from "./parts/FilterPanel";
 import { HeatmapChart } from "./parts/HeatmapChart";
 import { LinesChangedChart } from "./parts/LinesChangedChart";
-import { TerritoryChart } from "./parts/TerritoryChart";
-import { ActivityCalendarChart } from "./parts/ActivityCalendarChart";
-import { FilterPanel, applyFilter, type FilterState } from "./parts/FilterPanel";
-import { BranchOverviewCard } from "./parts/BranchOverviewCard";
 import { LoadingDialog, STEPS_COUNT } from "./parts/LoadingDialog";
 import { SummaryCard } from "./parts/SummaryCard";
-import { CommitRow } from "./parts/CommitRow";
-import { useRecentRepos } from "../../hooks/useRecentRepos";
+import { TerritoryChart } from "./parts/TerritoryChart";
 
 const INITIAL_FILTER: FilterState = {
   dateFrom: "",
@@ -97,10 +97,7 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
     return () => cancelAnimationFrame(raf);
   }, [renderedUpTo, addRecentRepo, repoPath]);
 
-  const filtered = useMemo(
-    () => applyFilter(commits, filter),
-    [commits, filter],
-  );
+  const filtered = useMemo(() => applyFilter(commits, filter), [commits, filter]);
 
   const handleCancel = useCallback(() => {
     setCommits([]);
@@ -117,17 +114,21 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
     <>
       {/* リポジトリパス表示 & 閉じるボタン */}
       <div className="flex items-center gap-2 mb-6">
-        <div className="flex-1 px-4 py-2 bg-cs-surface border border-cs-border rounded-lg
-                        text-cs-text-secondary text-sm truncate">
+        <div
+          className="flex-1 px-4 py-2 bg-cs-surface border border-cs-border rounded-lg
+                        text-cs-text-secondary text-sm truncate"
+        >
           {repoPath}
         </div>
         <button
+          type="button"
           onClick={handleCancel}
           className="px-3 py-2 bg-cs-surface border border-cs-border rounded-lg
                      hover:bg-cs-surface-2 transition-colors text-cs-text-secondary shrink-0"
           title="リポジトリを閉じる"
         >
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 18 18"
@@ -144,29 +145,17 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
 
       {/* エラー表示 */}
       {error && (
-        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">
-          {error}
-        </div>
+        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">{error}</div>
       )}
 
       {/* フィルター & サマリー (step 1) */}
       {commits.length > 0 && (loadingStep === null || renderedUpTo >= 1) && (
         <>
-          <FilterPanel
-            commits={commits}
-            filter={filter}
-            onChange={setFilter}
-          />
+          <FilterPanel commits={commits} filter={filter} onChange={setFilter} />
           <div className="mb-6 grid grid-cols-3 gap-4">
             <SummaryCard label="コミット数" value={filtered.length} />
-            <SummaryCard
-              label="コミッター数"
-              value={new Set(filtered.map((c) => c.email)).size}
-            />
-            <SummaryCard
-              label="変更ファイル数"
-              value={filtered.reduce((sum, c) => sum + c.files.length, 0)}
-            />
+            <SummaryCard label="コミッター数" value={new Set(filtered.map((c) => c.email)).size} />
+            <SummaryCard label="変更ファイル数" value={filtered.reduce((sum, c) => sum + c.files.length, 0)} />
           </div>
         </>
       )}
@@ -181,21 +170,11 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
       {/* ダッシュボード (steps 2-6) */}
       {filtered.length > 0 && (
         <div className="space-y-6 mb-6">
-          {(loadingStep === null || renderedUpTo >= 2) && (
-            <CommitFrequencyChart commits={filtered} />
-          )}
-          {(loadingStep === null || renderedUpTo >= 3) && (
-            <HeatmapChart commits={filtered} />
-          )}
-          {(loadingStep === null || renderedUpTo >= 4) && (
-            <ActivityCalendarChart commits={filtered} />
-          )}
-          {(loadingStep === null || renderedUpTo >= 5) && (
-            <LinesChangedChart commits={filtered} />
-          )}
-          {(loadingStep === null || renderedUpTo >= 6) && (
-            <TerritoryChart commits={filtered} />
-          )}
+          {(loadingStep === null || renderedUpTo >= 2) && <CommitFrequencyChart commits={filtered} />}
+          {(loadingStep === null || renderedUpTo >= 3) && <HeatmapChart commits={filtered} />}
+          {(loadingStep === null || renderedUpTo >= 4) && <ActivityCalendarChart commits={filtered} />}
+          {(loadingStep === null || renderedUpTo >= 5) && <LinesChangedChart commits={filtered} />}
+          {(loadingStep === null || renderedUpTo >= 6) && <TerritoryChart commits={filtered} />}
         </div>
       )}
 
@@ -213,11 +192,7 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
 
       {/* 読み込み中ダイアログ */}
       {loadingStep !== null && (
-        <LoadingDialog
-          currentStep={loadingStep}
-          streamReceived={streamReceived}
-          onCancel={handleCancel}
-        />
+        <LoadingDialog currentStep={loadingStep} streamReceived={streamReceived} onCancel={handleCancel} />
       )}
     </>
   );

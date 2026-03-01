@@ -34,17 +34,17 @@ export type CommitScopeRPC = {
       };
       analyzeRepository: {
         params: { path: string };
-        response: void;
+        response: undefined;
       };
       getBranches: {
         params: { path: string };
         response: BranchInfo[];
       };
     };
-    messages: {};
+    messages: Record<string, never>;
   };
   webview: {
-    requests: {};
+    requests: Record<string, never>;
     messages: {
       commitChunk: { commits: CommitData[]; progress: number };
       commitStreamEnd: { total: number };

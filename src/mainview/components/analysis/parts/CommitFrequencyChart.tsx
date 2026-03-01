@@ -1,17 +1,8 @@
-import { useState, useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { useMemo, useState } from "react";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CommitData } from "../../../shared/types";
+import { AXIS_STROKE, CHART_COLORS, GRID_STROKE, TOOLTIP_STYLE } from "../../../theme";
 import { aggregateFrequency, type TimeUnit } from "../../../utils/aggregate";
-import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../../../theme";
 
 const UNIT_LABELS: Record<TimeUnit, string> = {
   day: "日",
@@ -26,10 +17,7 @@ interface Props {
 export function CommitFrequencyChart({ commits }: Props) {
   const [unit, setUnit] = useState<TimeUnit>("week");
 
-  const { data, authors } = useMemo(
-    () => aggregateFrequency(commits, unit),
-    [commits, unit],
-  );
+  const { data, authors } = useMemo(() => aggregateFrequency(commits, unit), [commits, unit]);
 
   return (
     <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
@@ -38,6 +26,7 @@ export function CommitFrequencyChart({ commits }: Props) {
         <div className="flex gap-1">
           {(["day", "week", "month"] as const).map((u) => (
             <button
+              type="button"
               key={u}
               onClick={() => setUnit(u)}
               className={`px-3 py-1 text-sm rounded-lg transition-colors ${
@@ -55,12 +44,7 @@ export function CommitFrequencyChart({ commits }: Props) {
       <ResponsiveContainer width="100%" height={350}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-          <XAxis
-            dataKey="date"
-            stroke={AXIS_STROKE}
-            fontSize={12}
-            tickFormatter={(v) => formatDateLabel(v, unit)}
-          />
+          <XAxis dataKey="date" stroke={AXIS_STROKE} fontSize={12} tickFormatter={(v) => formatDateLabel(v, unit)} />
           <YAxis stroke={AXIS_STROKE} fontSize={12} />
           <Tooltip {...TOOLTIP_STYLE} />
           <Legend />
@@ -82,5 +66,5 @@ export function CommitFrequencyChart({ commits }: Props) {
 function formatDateLabel(value: string, unit: TimeUnit): string {
   if (unit === "month") return value;
   const parts = value.split("-");
-  return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+  return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
 }

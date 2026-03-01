@@ -1,17 +1,8 @@
-import { useState, useMemo } from "react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { useMemo, useState } from "react";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CommitData } from "../../../shared/types";
+import { AXIS_STROKE, GRID_STROKE, TOOLTIP_STYLE } from "../../../theme";
 import { aggregateLinesChanged, type TimeUnit } from "../../../utils/aggregate";
-import { TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../../../theme";
 
 const UNIT_LABELS: Record<TimeUnit, string> = {
   day: "日",
@@ -26,10 +17,7 @@ interface Props {
 export function LinesChangedChart({ commits }: Props) {
   const [unit, setUnit] = useState<TimeUnit>("week");
 
-  const data = useMemo(
-    () => aggregateLinesChanged(commits, unit),
-    [commits, unit],
-  );
+  const data = useMemo(() => aggregateLinesChanged(commits, unit), [commits, unit]);
 
   return (
     <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
@@ -38,6 +26,7 @@ export function LinesChangedChart({ commits }: Props) {
         <div className="flex gap-1">
           {(["day", "week", "month"] as const).map((u) => (
             <button
+              type="button"
               key={u}
               onClick={() => setUnit(u)}
               className={`px-3 py-1 text-sm rounded-lg transition-colors ${

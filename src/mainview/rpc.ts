@@ -1,6 +1,6 @@
 import { Electroview } from "electrobun/view";
-import type { CommitScopeRPC } from "../shared/types";
 import { RPC_MAX_REQUEST_TIME } from "../shared/config";
+import type { CommitScopeRPC } from "../shared/types";
 
 const rpcInstance = Electroview.defineRPC<CommitScopeRPC>({
   maxRequestTime: RPC_MAX_REQUEST_TIME,

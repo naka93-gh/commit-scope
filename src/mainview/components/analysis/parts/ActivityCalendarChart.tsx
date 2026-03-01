@@ -1,9 +1,6 @@
 import { useMemo } from "react";
 import type { CommitData } from "../../../shared/types";
-import {
-  aggregateActivityCalendar,
-  type ActivityCalendarDay,
-} from "../../../utils/aggregate";
+import { type ActivityCalendarDay, aggregateActivityCalendar } from "../../../utils/aggregate";
 
 const CELL_SIZE = 14;
 const GAP = 3;
@@ -12,10 +9,7 @@ const DAYS = 7;
 const DAY_LABEL_WIDTH = 30;
 const MONTH_LABEL_HEIGHT = 18;
 const DAY_LABELS = ["", "月", "", "水", "", "金", ""] as const;
-const MONTH_NAMES = [
-  "1月", "2月", "3月", "4月", "5月", "6月",
-  "7月", "8月", "9月", "10月", "11月", "12月",
-];
+const MONTH_NAMES = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
 
 interface Props {
   commits: CommitData[];
@@ -43,7 +37,7 @@ export function ActivityCalendarChart({ commits }: Props) {
     <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4">活動カレンダー</h3>
       <div className="overflow-x-auto">
-        <svg width={svgWidth} height={svgHeight}>
+        <svg aria-hidden="true" width={svgWidth} height={svgHeight}>
           {/* 月ラベル */}
           {monthLabels.map(({ month, week }) => (
             <text
@@ -103,11 +97,7 @@ export function ActivityCalendarChart({ commits }: Props) {
       <div className="flex items-center gap-2 mt-3 text-xs text-cs-text-tertiary">
         <span>少</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
-          <div
-            key={v}
-            className="w-4 h-4 rounded"
-            style={{ backgroundColor: intensityToColor(v) }}
-          />
+          <div key={v} className="w-4 h-4 rounded" style={{ backgroundColor: intensityToColor(v) }} />
         ))}
         <span>多</span>
       </div>

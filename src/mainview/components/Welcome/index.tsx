@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { rpc } from "../../rpc";
 import { useRecentRepos } from "../../hooks/useRecentRepos";
+import { rpc } from "../../rpc";
 
 interface Props {
   onAnalyze: (path: string) => void;
@@ -38,12 +38,14 @@ export function WelcomePage({ onAnalyze }: Props) {
       {/* リポジトリパス入力 */}
       <div className="flex gap-2 mb-6">
         <button
+          type="button"
           onClick={handleSelectFolder}
           className="px-3 py-2 bg-cs-surface border border-cs-border rounded-lg
                      hover:bg-cs-surface-2 transition-colors text-cs-text-secondary shrink-0"
           title="フォルダを選択"
         >
           <svg
+            aria-hidden="true"
             width="18"
             height="18"
             viewBox="0 0 18 18"
@@ -67,6 +69,7 @@ export function WelcomePage({ onAnalyze }: Props) {
                      focus:outline-none focus:border-cs-primary transition-colors"
         />
         <button
+          type="button"
           onClick={handleAnalyze}
           disabled={!repoPath.trim()}
           className="px-6 py-2 bg-cs-primary hover:bg-cs-primary-hover
@@ -81,9 +84,7 @@ export function WelcomePage({ onAnalyze }: Props) {
       {/* 最近開いたリポジトリ */}
       {recentRepos.length > 0 && (
         <div className="mb-6 bg-cs-surface border border-cs-border rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-cs-text-secondary mb-2">
-            最近開いたリポジトリ
-          </h2>
+          <h2 className="text-sm font-semibold text-cs-text-secondary mb-2">最近開いたリポジトリ</h2>
           <div className="flex flex-wrap gap-2">
             {recentRepos.map((repo) => (
               <div
@@ -91,14 +92,16 @@ export function WelcomePage({ onAnalyze }: Props) {
                 className="flex items-center gap-1 px-3 py-1.5 bg-cs-surface-2 border border-cs-border
                            rounded-lg text-sm cursor-pointer hover:border-cs-primary transition-colors group"
               >
-                <span
+                <button
+                  type="button"
                   onClick={() => handleRecentClick(repo)}
-                  className="truncate max-w-[240px]"
+                  className="truncate max-w-[240px] bg-transparent border-none p-0 cursor-pointer text-inherit text-left"
                   title={repo}
                 >
                   {repo}
-                </span>
+                </button>
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeRecentRepo(repo);
@@ -116,9 +119,7 @@ export function WelcomePage({ onAnalyze }: Props) {
 
       {/* エラー表示 */}
       {error && (
-        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">
-          {error}
-        </div>
+        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">{error}</div>
       )}
     </>
   );

@@ -1,17 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CommitData } from "../../../shared/types";
+import { AXIS_STROKE, CHART_COLORS, GRID_STROKE, TOOLTIP_STYLE } from "../../../theme";
 import { aggregateTerritory } from "../../../utils/aggregate";
-import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../../../theme";
 import { DirTreeSelector } from "./DirTreeSelector";
 
 interface Props {
@@ -40,10 +31,9 @@ export function TerritoryChart({ commits }: Props) {
 
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
-          <label className="text-sm text-cs-text-secondary">
-            ディレクトリ:
-          </label>
+          <span className="text-sm text-cs-text-secondary">ディレクトリ:</span>
           <button
+            type="button"
             onClick={selectAll}
             className={`px-2 py-0.5 text-xs rounded-lg transition-colors ${
               allSelected

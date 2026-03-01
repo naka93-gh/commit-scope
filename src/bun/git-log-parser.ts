@@ -3,19 +3,13 @@ import { join } from "node:path";
 import type { CommitData, FileChange } from "../shared/types";
 
 const SEPARATOR = "---COMMIT_END---";
-const FORMAT = [
-  "Hash:%H",
-  "Author:%an",
-  "Email:%ae",
-  "Date:%aI",
-  "Message:%s",
-].join("%n");
+const FORMAT = ["Hash:%H", "Author:%an", "Email:%ae", "Date:%aI", "Message:%s"].join("%n");
 
 const STREAM_CHUNK_SIZE = 100;
 
 /** 指定パスが有効な Git リポジトリか検証する */
 export async function validateRepoPath(repoPath: string): Promise<void> {
-  let dirStat;
+  let dirStat: Awaited<ReturnType<typeof stat>> | undefined;
   try {
     dirStat = await stat(repoPath);
   } catch {
@@ -53,10 +47,7 @@ export async function getHeadHash(repoPath: string): Promise<string> {
 }
 
 /** hash が HEAD の祖先かどうか判定 */
-export async function isAncestor(
-  repoPath: string,
-  hash: string,
-): Promise<boolean> {
+export async function isAncestor(repoPath: string, hash: string): Promise<boolean> {
   const proc = Bun.spawn(["git", "merge-base", "--is-ancestor", hash, "HEAD"], {
     cwd: repoPath,
     stdout: "pipe",
@@ -96,7 +87,7 @@ export async function streamCommits(
     const parts = text.split(SEPARATOR);
 
     // 最後の要素は不完全な可能性があるので remainder に回す
-    remainder = parts.pop()!;
+    remainder = parts.pop() ?? "";
 
     for (const part of parts) {
       const trimmed = part.trim();

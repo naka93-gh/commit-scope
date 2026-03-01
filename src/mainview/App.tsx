@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { THEME, THEME_STORAGE_KEY, type Theme } from "../shared/config";
-import { WelcomePage } from "./components/Welcome";
-import { AnalysisPage } from "./components/Analysis";
 import iconUrl from "./assets/icon.svg";
+import { AnalysisPage } from "./components/Analysis";
+import { WelcomePage } from "./components/Welcome";
 
 type Page = "welcome" | "analysis";
 
@@ -23,8 +23,7 @@ function App() {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  const toggleTheme = () =>
-    setTheme((t) => (t === THEME.DARK ? THEME.LIGHT : THEME.DARK));
+  const toggleTheme = () => setTheme((t) => (t === THEME.DARK ? THEME.LIGHT : THEME.DARK));
 
   const handleAnalyze = (path: string) => {
     setRepoPath(path);
@@ -45,14 +44,11 @@ function App() {
             <img src={iconUrl} alt="CommitScope" className="w-9 h-9 mr-2" />
             <h1 className="text-3xl font-bold">CommitScope</h1>
             <button
+              type="button"
               onClick={toggleTheme}
               className="absolute right-0 p-2 rounded-lg bg-cs-surface border border-cs-border
                          hover:bg-cs-surface-2 transition-colors text-sm"
-              title={
-                theme === THEME.DARK
-                  ? "ライトモードに切替"
-                  : "ダークモードに切替"
-              }
+              title={theme === THEME.DARK ? "ライトモードに切替" : "ダークモードに切替"}
             >
               {theme === THEME.DARK ? "\u2600\uFE0F" : "\uD83C\uDF19"}
             </button>

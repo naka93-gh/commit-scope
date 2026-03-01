@@ -39,7 +39,7 @@ function toDateKey(dateStr: string, unit: TimeUnit): string {
       let key = weekKeyCache.get(dayStr);
       if (key !== undefined) return key;
 
-      const d = new Date(dayStr + "T00:00:00");
+      const d = new Date(`${dayStr}T00:00:00`);
       const dow = d.getDay();
       const diff = dow === 0 ? 6 : dow - 1;
       if (diff === 0) {
@@ -64,7 +64,7 @@ function getDayOfWeek(dateStr: string): number {
   let day = dowCache.get(dayStr);
   if (day !== undefined) return day;
 
-  const jsDay = new Date(dayStr + "T00:00:00").getDay();
+  const jsDay = new Date(`${dayStr}T00:00:00`).getDay();
   day = jsDay === 0 ? 6 : jsDay - 1;
   dowCache.set(dayStr, day);
   return day;
@@ -108,6 +108,7 @@ export function aggregateFrequency(
   const sortedKeys = [...map.keys()].sort();
 
   const data: FrequencyPoint[] = sortedKeys.map((key) => {
+    // biome-ignore lint/style/noNonNullAssertion: key is from map.keys()
     const authorMap = map.get(key)!;
     const point: FrequencyPoint = { date: key };
     for (const author of authors) {
@@ -131,10 +132,7 @@ export function aggregateHeatmap(commits: CommitData[]): HeatmapGrid {
 }
 
 /** 追加/削除行数の時系列推移を集計する */
-export function aggregateLinesChanged(
-  commits: CommitData[],
-  unit: TimeUnit,
-): LinesChangedPoint[] {
+export function aggregateLinesChanged(commits: CommitData[], unit: TimeUnit): LinesChangedPoint[] {
   const map = new Map<string, { additions: number; deletions: number }>();
 
   for (const commit of commits) {
@@ -150,9 +148,7 @@ export function aggregateLinesChanged(
     }
   }
 
-  return [...map.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, v]) => ({ date, ...v }));
+  return [...map.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, v]) => ({ date, ...v }));
 }
 
 const MAX_DIRECTORIES = 15;
@@ -163,9 +159,7 @@ export interface ActivityCalendarDay {
 }
 
 /** 最新コミット日から過去1年分の日別コミット数を集計する（週の開始=日曜に揃える） */
-export function aggregateActivityCalendar(
-  commits: CommitData[],
-): ActivityCalendarDay[] {
+export function aggregateActivityCalendar(commits: CommitData[]): ActivityCalendarDay[] {
   if (commits.length === 0) return [];
 
   // 最新日を特定
@@ -183,7 +177,7 @@ export function aggregateActivityCalendar(
   }
 
   // 最新日の週末（土曜日）を終端にする
-  const latest = new Date(latestStr + "T00:00:00");
+  const latest = new Date(`${latestStr}T00:00:00`);
   const latestDow = latest.getDay(); // 0=日
   const endDate = new Date(latest);
   endDate.setDate(latest.getDate() + (6 - latestDow));
@@ -227,11 +221,12 @@ export function aggregateTerritory(
     const author = topAuthors.has(commit.author) ? commit.author : OTHERS_LABEL;
     for (const file of commit.files) {
       const parts = file.path.split("/");
-      const dir = parts.length > depth
-        ? parts.slice(0, depth).join("/")
-        : parts.length > 1
-          ? parts.slice(0, -1).join("/")
-          : "(root)";
+      const dir =
+        parts.length > depth
+          ? parts.slice(0, depth).join("/")
+          : parts.length > 1
+            ? parts.slice(0, -1).join("/")
+            : "(root)";
 
       let authorMap = dirMap.get(dir);
       if (!authorMap) {
@@ -260,9 +255,10 @@ export function aggregateTerritory(
   const dirCounts = new Map(allDirTotals.map(({ dir, total }) => [dir, total]));
 
   // 4. 表示対象ディレクトリを決定
-  const dirTotals = selectedDirs && selectedDirs.size > 0
-    ? allDirTotals.filter(({ dir }) => selectedDirs.has(dir))
-    : allDirTotals.slice(0, MAX_DIRECTORIES);
+  const dirTotals =
+    selectedDirs && selectedDirs.size > 0
+      ? allDirTotals.filter(({ dir }) => selectedDirs.has(dir))
+      : allDirTotals.slice(0, MAX_DIRECTORIES);
 
   // 5. 著者リスト（コミット数順）
   const authors = sorted.slice(0, MAX_AUTHORS).map(([a]) => a);
@@ -279,4 +275,3 @@ export function aggregateTerritory(
 
   return { data, authors, allDirs, dirCounts };
 }
-

@@ -1,4 +1,4 @@
-import { RECENT_REPOS_KEY, MAX_RECENT_REPOS } from "../../shared/config";
+import { MAX_RECENT_REPOS, RECENT_REPOS_KEY } from "../../shared/config";
 
 type Listener = () => void;
 

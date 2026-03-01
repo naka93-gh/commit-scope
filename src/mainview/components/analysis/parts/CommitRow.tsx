@@ -20,13 +20,9 @@ export function CommitRow({ commit }: Props) {
       <div className="flex gap-3 text-xs font-mono shrink-0">
         <span className="text-cs-success w-16 text-right">+{additions}</span>
         <span className="text-cs-error w-16 text-right">-{deletions}</span>
-        <span className="text-cs-text-tertiary w-20 text-right">
-          {commit.files.length} files
-        </span>
+        <span className="text-cs-text-tertiary w-20 text-right">{commit.files.length} files</span>
       </div>
-      <code className="text-xs text-cs-text-tertiary font-mono shrink-0">
-        {commit.hash.slice(0, 7)}
-      </code>
+      <code className="text-xs text-cs-text-tertiary font-mono shrink-0">{commit.hash.slice(0, 7)}</code>
     </div>
   );
 }

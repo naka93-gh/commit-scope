@@ -26,10 +26,7 @@ export function HeatmapChart({ commits }: Props) {
     <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-4">時間帯ヒートマップ</h3>
       <div className="overflow-x-auto">
-        <svg
-          width={80 + 24 * (CELL_SIZE + GAP)}
-          height={30 + 7 * (CELL_SIZE + GAP)}
-        >
+        <svg aria-hidden="true" width={80 + 24 * (CELL_SIZE + GAP)} height={30 + 7 * (CELL_SIZE + GAP)}>
           {/* 時間ラベル */}
           {Array.from({ length: 24 }, (_, h) => (
             <text
@@ -58,25 +55,21 @@ export function HeatmapChart({ commits }: Props) {
               >
                 {label}
               </text>
-              {Array.from({ length: 24 }, (_, hour) => {
-                const count = grid[day][hour];
-                const intensity = count / maxCount;
-                return (
-                  <rect
-                    key={`${day}-${hour}`}
-                    x={80 + hour * (CELL_SIZE + GAP)}
-                    y={30 + day * (CELL_SIZE + GAP)}
-                    width={CELL_SIZE}
-                    height={CELL_SIZE}
-                    rx={6}
-                    fill={intensityToColor(intensity)}
-                  >
-                    <title>
-                      {label} {hour}時: {count} コミット
-                    </title>
-                  </rect>
-                );
-              })}
+              {Array.from({ length: 24 }, (_, hour) => (
+                <rect
+                  key={`${day}-${hour}`}
+                  x={80 + hour * (CELL_SIZE + GAP)}
+                  y={30 + day * (CELL_SIZE + GAP)}
+                  width={CELL_SIZE}
+                  height={CELL_SIZE}
+                  rx={6}
+                  fill={intensityToColor(grid[day][hour] / maxCount)}
+                >
+                  <title>
+                    {label} {hour}時: {grid[day][hour]} コミット
+                  </title>
+                </rect>
+              ))}
             </g>
           ))}
         </svg>
@@ -86,11 +79,7 @@ export function HeatmapChart({ commits }: Props) {
       <div className="flex items-center gap-2 mt-3 text-xs text-cs-text-tertiary">
         <span>少</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
-          <div
-            key={v}
-            className="w-4 h-4 rounded"
-            style={{ backgroundColor: intensityToColor(v) }}
-          />
+          <div key={v} className="w-4 h-4 rounded" style={{ backgroundColor: intensityToColor(v) }} />
         ))}
         <span>多</span>
       </div>

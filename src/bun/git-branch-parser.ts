@@ -1,7 +1,6 @@
 import type { BranchInfo } from "../shared/types";
 
-const REF_FORMAT =
-  "%(refname:short)|%(committerdate:iso-strict)|%(committername)";
+const REF_FORMAT = "%(refname:short)|%(committerdate:iso-strict)|%(committername)";
 
 /** 現在のブランチ名を取得 */
 async function getCurrentBranch(repoPath: string): Promise<string> {
@@ -21,14 +20,7 @@ export async function getBranchList(repoPath: string): Promise<BranchInfo[]> {
     getCurrentBranch(repoPath),
     (async () => {
       const proc = Bun.spawn(
-        [
-          "git",
-          "for-each-ref",
-          `--sort=-committerdate`,
-          `--format=${REF_FORMAT}`,
-          "refs/heads/",
-          "refs/remotes/",
-        ],
+        ["git", "for-each-ref", `--sort=-committerdate`, `--format=${REF_FORMAT}`, "refs/heads/", "refs/remotes/"],
         { cwd: repoPath, stdout: "pipe", stderr: "pipe" },
       );
       const text = await new Response(proc.stdout).text();

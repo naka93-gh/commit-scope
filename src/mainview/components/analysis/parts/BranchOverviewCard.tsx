@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { rpc } from "../../../rpc";
 import type { BranchInfo } from "../../../shared/types";
 
@@ -48,9 +48,7 @@ export function BranchOverviewCard({ repoPath }: Props) {
 
   const displayed = tab === "local" ? localBranches : remoteBranches;
   const showExpand = displayed.length > INITIAL_DISPLAY;
-  const visibleBranches = expanded
-    ? displayed
-    : displayed.slice(0, INITIAL_DISPLAY);
+  const visibleBranches = expanded ? displayed : displayed.slice(0, INITIAL_DISPLAY);
   const hiddenCount = displayed.length - INITIAL_DISPLAY;
 
   return (
@@ -86,19 +84,14 @@ export function BranchOverviewCard({ repoPath }: Props) {
           {/* 現在のブランチ（ローカルタブのみ） */}
           {tab === "local" && currentBranch && (
             <div className="text-sm text-cs-text-secondary mb-3">
-              現在:{" "}
-              <span className="font-semibold text-cs-text-primary">
-                {currentBranch.name}
-              </span>
+              現在: <span className="font-semibold text-cs-text-primary">{currentBranch.name}</span>
             </div>
           )}
 
           {/* ブランチ一覧テーブル */}
           {displayed.length === 0 ? (
             <div className="text-sm text-cs-text-tertiary">
-              {tab === "local"
-                ? "ローカルブランチがありません"
-                : "リモートブランチがありません"}
+              {tab === "local" ? "ローカルブランチがありません" : "リモートブランチがありません"}
             </div>
           ) : (
             <>
@@ -113,26 +106,17 @@ export function BranchOverviewCard({ repoPath }: Props) {
                   </thead>
                   <tbody>
                     {visibleBranches.map((branch) => (
-                      <tr
-                        key={branch.name}
-                        className="border-b border-cs-border/50 last:border-b-0"
-                      >
+                      <tr key={branch.name} className="border-b border-cs-border/50 last:border-b-0">
                         <td className="py-1.5 pr-4">
                           <span className="font-mono text-xs">
-                            {branch.isCurrent && (
-                              <span className="text-cs-primary mr-1">
-                                &#9733;
-                              </span>
-                            )}
+                            {branch.isCurrent && <span className="text-cs-primary mr-1">&#9733;</span>}
                             {branch.name}
                           </span>
                         </td>
                         <td className="py-1.5 pr-4 text-cs-text-secondary whitespace-nowrap">
                           {formatDate(branch.lastCommitDate)}
                         </td>
-                        <td className="py-1.5 text-cs-text-secondary">
-                          {branch.lastCommitAuthor}
-                        </td>
+                        <td className="py-1.5 text-cs-text-secondary">{branch.lastCommitAuthor}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -141,12 +125,11 @@ export function BranchOverviewCard({ repoPath }: Props) {
 
               {showExpand && (
                 <button
+                  type="button"
                   onClick={() => setExpanded(!expanded)}
                   className="mt-2 text-xs text-cs-primary hover:underline"
                 >
-                  {expanded
-                    ? "折りたたむ"
-                    : `他 ${hiddenCount} 件を表示`}
+                  {expanded ? "折りたたむ" : `他 ${hiddenCount} 件を表示`}
                 </button>
               )}
             </>
@@ -157,22 +140,13 @@ export function BranchOverviewCard({ repoPath }: Props) {
   );
 }
 
-function TabButton({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) {
+function TabButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-        active
-          ? "bg-cs-primary text-white"
-          : "bg-cs-surface-2 text-cs-text-secondary hover:text-cs-text-primary"
+        active ? "bg-cs-primary text-white" : "bg-cs-surface-2 text-cs-text-secondary hover:text-cs-text-primary"
       }`}
     >
       {label}

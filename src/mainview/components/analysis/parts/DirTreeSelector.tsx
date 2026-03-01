@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface TreeNode {
   name: string;
@@ -16,10 +16,7 @@ interface DirTreeSelectorProps {
 }
 
 /** フラットなパス配列をツリー構造に変換 */
-function buildTree(
-  allDirs: string[],
-  dirCounts: Map<string, number>,
-): TreeNode[] {
+function buildTree(allDirs: string[], dirCounts: Map<string, number>): TreeNode[] {
   const rootChildren: TreeNode[] = [];
   const nodeMap = new Map<string, TreeNode>();
 
@@ -119,13 +116,11 @@ function TreeNodeRow({
 
   return (
     <>
-      <div
-        className="flex items-center gap-1 py-0.5"
-        style={{ paddingLeft: `${level * 16}px` }}
-      >
+      <div className="flex items-center gap-1 py-0.5" style={{ paddingLeft: `${level * 16}px` }}>
         {/* 展開/折りたたみトグル */}
         {hasChildren ? (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onToggleExpand(node.path);
@@ -140,6 +135,7 @@ function TreeNodeRow({
 
         {/* ノード名ボタン */}
         <button
+          type="button"
           onClick={() => onClickNode(node)}
           className={`px-2 py-0.5 text-xs rounded-lg transition-colors truncate max-w-[240px] ${
             selected
@@ -151,9 +147,7 @@ function TreeNodeRow({
           title={node.path}
         >
           {node.name}
-          {node.isDataNode && (
-            <span className="ml-1 opacity-60 font-mono">{node.count}</span>
-          )}
+          {node.isDataNode && <span className="ml-1 opacity-60 font-mono">{node.count}</span>}
         </button>
       </div>
 
@@ -175,12 +169,7 @@ function TreeNodeRow({
   );
 }
 
-export function DirTreeSelector({
-  allDirs,
-  dirCounts,
-  selectedDirs,
-  onSelectionChange,
-}: DirTreeSelectorProps) {
+export function DirTreeSelector({ allDirs, dirCounts, selectedDirs, onSelectionChange }: DirTreeSelectorProps) {
   const tree = useMemo(() => buildTree(allDirs, dirCounts), [allDirs, dirCounts]);
 
   // 初期状態: 第1階層は展開
