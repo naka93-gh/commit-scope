@@ -1,45 +1,14 @@
-import { useState, useCallback } from "react";
-import { RECENT_REPOS_KEY, MAX_RECENT_REPOS } from "../../shared/config";
-
-function loadRepos(): string[] {
-  try {
-    const raw = localStorage.getItem(RECENT_REPOS_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((v): v is string => typeof v === "string");
-  } catch {
-    return [];
-  }
-}
-
-function saveRepos(repos: string[]): void {
-  try {
-    localStorage.setItem(RECENT_REPOS_KEY, JSON.stringify(repos));
-  } catch {}
-}
+import { useSyncExternalStore, useCallback } from "react";
+import { RecentRepoStore } from "../stores/RecentRepoStore";
 
 export function useRecentRepos() {
-  const [repos, setRepos] = useState<string[]>(loadRepos);
+  const repos = useSyncExternalStore(
+    RecentRepoStore.subscribe,
+    RecentRepoStore.getSnapshot,
+  );
 
-  const add = useCallback((path: string) => {
-    setRepos((prev) => {
-      const next = [path, ...prev.filter((p) => p !== path)].slice(
-        0,
-        MAX_RECENT_REPOS,
-      );
-      saveRepos(next);
-      return next;
-    });
-  }, []);
-
-  const remove = useCallback((path: string) => {
-    setRepos((prev) => {
-      const next = prev.filter((p) => p !== path);
-      saveRepos(next);
-      return next;
-    });
-  }, []);
+  const add = useCallback((path: string) => RecentRepoStore.add(path), []);
+  const remove = useCallback((path: string) => RecentRepoStore.remove(path), []);
 
   return { repos, add, remove } as const;
 }
