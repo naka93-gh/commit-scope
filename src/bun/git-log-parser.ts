@@ -1,11 +1,10 @@
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
+import { STREAM_CHUNK_SIZE } from "../shared/config";
 import type { CommitData, FileChange } from "../shared/types";
 
 const SEPARATOR = "---COMMIT_END---";
 const FORMAT = ["Hash:%H", "Author:%an", "Email:%ae", "Date:%aI", "Message:%s"].join("%n");
-
-const STREAM_CHUNK_SIZE = 100;
 
 /** 指定パスが有効な Git リポジトリか検証する */
 export async function validateRepoPath(repoPath: string): Promise<void> {

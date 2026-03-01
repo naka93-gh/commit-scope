@@ -17,3 +17,15 @@ export const RECENT_REPOS_KEY = "cs-recent-repos";
 
 /** 最近開いたリポジトリの最大保存件数 */
 export const MAX_RECENT_REPOS = 5;
+
+/** コミッター別チャートで表示する上位著者数（超過分は "Others" に集約） */
+export const MAX_AUTHORS = 10;
+
+/** テリトリーチャートで表示するディレクトリ数の初期上限 */
+export const MAX_DIRECTORIES = 15;
+
+/** git log ストリーミングのチャンクサイズ（コミット数） */
+export const STREAM_CHUNK_SIZE = 100;
+
+/** コミット一覧の表示上限 */
+export const MAX_DISPLAY_COMMITS = 100;

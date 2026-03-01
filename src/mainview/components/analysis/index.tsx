@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MAX_DISPLAY_COMMITS } from "../../../shared/config";
 import type { CommitData } from "../../../shared/types";
 import { useRecentRepos } from "../../hooks/useRecentRepos";
 import { rpc } from "../../rpc";
@@ -182,9 +183,9 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
       {filtered.length > 0 && loadingStep === null && (
         <div className="space-y-2">
           <h2 className="text-xl font-semibold mb-3">
-            最近のコミット（{Math.min(filtered.length, 100)} / {filtered.length} 件）
+            最近のコミット（{Math.min(filtered.length, MAX_DISPLAY_COMMITS)} / {filtered.length} 件）
           </h2>
-          {filtered.slice(0, 100).map((commit) => (
+          {filtered.slice(0, MAX_DISPLAY_COMMITS).map((commit) => (
             <CommitRow key={commit.hash} commit={commit} />
           ))}
         </div>

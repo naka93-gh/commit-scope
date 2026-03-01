@@ -1,3 +1,4 @@
+import { MAX_AUTHORS, MAX_DIRECTORIES } from "../../shared/config";
 import type { CommitData } from "../../shared/types";
 
 export type TimeUnit = "day" | "week" | "month";
@@ -70,7 +71,6 @@ function getDayOfWeek(dateStr: string): number {
   return day;
 }
 
-const MAX_AUTHORS = 10;
 const OTHERS_LABEL = "Others";
 
 /** コミッター別のコミット頻度を集計する（上位 N 人 + Others） */
@@ -150,8 +150,6 @@ export function aggregateLinesChanged(commits: CommitData[], unit: TimeUnit): Li
 
   return [...map.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, v]) => ({ date, ...v }));
 }
-
-const MAX_DIRECTORIES = 15;
 
 export interface ActivityCalendarDay {
   date: string; // "YYYY-MM-DD"
