@@ -4,6 +4,7 @@ import { useCommitAnalysis } from "../../hooks/useCommitAnalysis";
 import { ErrorBanner } from "../ErrorBanner";
 import { ActivityCalendarChart } from "./parts/ActivityCalendarChart";
 import { BranchOverviewCard } from "./parts/BranchOverviewCard";
+import { BusFactorCard } from "./parts/BusFactorCard";
 import { CommitFrequencyChart } from "./parts/CommitFrequencyChart";
 import { CommitRow } from "./parts/CommitRow";
 import { applyFilter, FilterPanel, type FilterState } from "./parts/FilterPanel";
@@ -19,7 +20,7 @@ const INITIAL_FILTER: FilterState = {
   selectedAuthors: new Set(),
 };
 
-type SectionKey = "overview" | "frequency" | "heatmap" | "activity" | "lines" | "territory" | "commits";
+type SectionKey = "overview" | "frequency" | "heatmap" | "activity" | "lines" | "territory" | "busfactor" | "commits";
 
 interface NavItem {
   key: SectionKey;
@@ -45,6 +46,7 @@ const NAV_GROUPS: NavGroup[] = [
       { key: "activity", label: "アクティビティ", color: "#30d158" },
       { key: "lines", label: "変更行数", color: "#ffd60a" },
       { key: "territory", label: "担当領域", color: "#ff453a" },
+      { key: "busfactor", label: "バスファクター", color: "#ff6961" },
     ],
   },
   {
@@ -190,6 +192,8 @@ function SectionContent({
       return <LinesChangedChart commits={filtered} />;
     case "territory":
       return <TerritoryChart commits={filtered} />;
+    case "busfactor":
+      return <BusFactorCard commits={filtered} />;
     case "commits":
       return (
         <div className="space-y-2">

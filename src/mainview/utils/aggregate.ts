@@ -199,6 +199,48 @@ export function aggregateActivityCalendar(commits: CommitData[]): ActivityCalend
   return result;
 }
 
+export interface BusFactorEntry {
+  directory: string;
+  contributors: string[];
+  commitCount: number;
+}
+
+/** ディレクトリごとのバスファクター（ユニークコントリビューター数）を集計する */
+export function aggregateBusFactor(commits: CommitData[], depth: number): BusFactorEntry[] {
+  // ディレクトリごとに著者セットとコミットハッシュセットを収集
+  const dirMap = new Map<string, { authors: Set<string>; hashes: Set<string> }>();
+
+  for (const commit of commits) {
+    for (const file of commit.files) {
+      const parts = file.path.split("/");
+      const dir =
+        parts.length > depth
+          ? parts.slice(0, depth).join("/")
+          : parts.length > 1
+            ? parts.slice(0, -1).join("/")
+            : "(root)";
+
+      let entry = dirMap.get(dir);
+      if (!entry) {
+        entry = { authors: new Set(), hashes: new Set() };
+        dirMap.set(dir, entry);
+      }
+      entry.authors.add(commit.author);
+      entry.hashes.add(commit.hash);
+    }
+  }
+
+  // コントリビューター数が少ない順（リスク高）→ 同数ならコミット数降順
+  return [...dirMap.entries()]
+    .map(([directory, { authors, hashes }]) => ({
+      directory,
+      contributors: [...authors],
+      commitCount: hashes.size,
+    }))
+    .sort((a, b) => a.contributors.length - b.contributors.length || b.commitCount - a.commitCount)
+    .slice(0, MAX_DIRECTORIES);
+}
+
 /** コミッター別のディレクトリ変更割合を集計する */
 export function aggregateTerritory(
   commits: CommitData[],
