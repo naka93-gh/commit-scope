@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toErrorMessage } from "../../shared/errors";
 import type { CommitData } from "../../shared/types";
 import { STEPS_COUNT } from "../components/Analysis/parts/LoadingDialog";
 import { rpc } from "../rpc";
@@ -16,7 +17,13 @@ export function useCommitAnalysis(repoPath: string) {
 
   // ストリーミングメッセージのリスナ登録
   useEffect(() => {
-    const onChunk = ({ commits: chunk, progress }: { commits: CommitData[]; progress: number }) => {
+    const onChunk = ({
+      commits: chunk,
+      progress,
+    }: {
+      commits: CommitData[];
+      progress: number;
+    }) => {
       for (const c of chunk) commitsRef.current.push(c);
       setStreamReceived(progress);
     };
@@ -48,7 +55,7 @@ export function useCommitAnalysis(repoPath: string) {
       try {
         await rpc.request.analyzeRepository({ path: repoPath });
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setError(toErrorMessage(e));
         setLoadingStep(null);
       }
     };
@@ -57,7 +64,8 @@ export function useCommitAnalysis(repoPath: string) {
 
   // loadingStep が変わったら対応コンポーネントをマウント
   useEffect(() => {
-    if (loadingStep === null || loadingStep < 1 || loadingStep > STEPS_COUNT) return;
+    if (loadingStep === null || loadingStep < 1 || loadingStep > STEPS_COUNT)
+      return;
     const raf = requestAnimationFrame(() => setRenderedUpTo(loadingStep));
     return () => cancelAnimationFrame(raf);
   }, [loadingStep]);
@@ -87,5 +95,13 @@ export function useCommitAnalysis(repoPath: string) {
     setStreamReceived(0);
   }, [clearError]);
 
-  return { commits, error, clearError, loadingStep, streamReceived, renderedUpTo, reset } as const;
+  return {
+    commits,
+    error,
+    clearError,
+    loadingStep,
+    streamReceived,
+    renderedUpTo,
+    reset,
+  } as const;
 }

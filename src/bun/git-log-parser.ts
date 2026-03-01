@@ -4,7 +4,13 @@ import { STREAM_CHUNK_SIZE } from "../shared/config";
 import type { CommitData, FileChange } from "../shared/types";
 
 const SEPARATOR = "---COMMIT_END---";
-const FORMAT = ["Hash:%H", "Author:%an", "Email:%ae", "Date:%aI", "Message:%s"].join("%n");
+const FORMAT = [
+  "Hash:%H",
+  "Author:%an",
+  "Email:%ae",
+  "Date:%aI",
+  "Message:%s",
+].join("%n");
 
 /** 指定パスが有効な Git リポジトリか検証する */
 export async function validateRepoPath(repoPath: string): Promise<void> {
@@ -40,13 +46,18 @@ export async function getHeadHash(repoPath: string): Promise<string> {
   const text = await new Response(proc.stdout).text();
   const exitCode = await proc.exited;
   if (exitCode !== 0) {
-    throw new Error("git rev-parse HEAD failed");
+    const stderr = await new Response(proc.stderr).text();
+    console.error("git rev-parse HEAD failed", { exitCode, stderr });
+    throw new Error("最新コミットの取得に失敗しました");
   }
   return text.trim();
 }
 
 /** hash が HEAD の祖先かどうか判定 */
-export async function isAncestor(repoPath: string, hash: string): Promise<boolean> {
+export async function isAncestor(
+  repoPath: string,
+  hash: string,
+): Promise<boolean> {
   const proc = Bun.spawn(["git", "merge-base", "--is-ancestor", hash, "HEAD"], {
     cwd: repoPath,
     stdout: "pipe",
@@ -122,7 +133,8 @@ export async function streamCommits(
   const exitCode = await proc.exited;
   if (exitCode !== 0) {
     const stderr = await new Response(proc.stderr).text();
-    throw new Error(`git log failed: ${stderr}`);
+    console.error("git log failed", { exitCode, stderr });
+    throw new Error("コミット履歴の取得に失敗しました");
   }
 
   return totalParsed;

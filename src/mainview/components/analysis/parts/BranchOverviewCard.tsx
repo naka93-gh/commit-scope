@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toErrorMessage } from "../../../../shared/errors";
 import { rpc } from "../../../rpc";
 import type { BranchInfo } from "../../../shared/types";
 
@@ -32,7 +33,7 @@ export function BranchOverviewCard({ repoPath }: Props) {
       })
       .catch((e) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : String(e));
+          setError(toErrorMessage(e));
           setLoading(false);
         }
       });

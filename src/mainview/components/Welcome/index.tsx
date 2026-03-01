@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toErrorMessage } from "../../../shared/errors";
 import { useRecentRepos } from "../../hooks/useRecentRepos";
 import { rpc } from "../../rpc";
 import { ErrorBanner } from "../ErrorBanner";
@@ -21,7 +22,7 @@ export function WelcomePage({ onAnalyze }: Props) {
         setRepoPath(path);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(toErrorMessage(e));
     }
   };
 
