@@ -9,9 +9,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { CommitData } from "../../shared/types";
-import { aggregateTerritory } from "../utils/aggregate";
-import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../theme";
+import type { CommitData } from "../../../shared/types";
+import { aggregateTerritory } from "../../../utils/aggregate";
+import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../../../theme";
 import { DirTreeSelector } from "./DirTreeSelector";
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { CommitData } from "../../shared/types";
+import type { CommitData } from "../../../shared/types";
 
 export interface FilterState {
   dateFrom: string;

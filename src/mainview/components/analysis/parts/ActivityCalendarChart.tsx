@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import type { CommitData } from "../../shared/types";
+import type { CommitData } from "../../../shared/types";
 import {
   aggregateActivityCalendar,
   type ActivityCalendarDay,
-} from "../utils/aggregate";
+} from "../../../utils/aggregate";
 
 const CELL_SIZE = 14;
 const GAP = 3;

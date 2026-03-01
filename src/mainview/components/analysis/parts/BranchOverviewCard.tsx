@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { rpc } from "../rpc";
-import type { BranchInfo } from "../../shared/types";
+import { rpc } from "../../../rpc";
+import type { BranchInfo } from "../../../shared/types";
 
 const INITIAL_DISPLAY = 20;
 

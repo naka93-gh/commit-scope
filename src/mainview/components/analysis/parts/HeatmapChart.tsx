@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { CommitData } from "../../shared/types";
-import { aggregateHeatmap } from "../utils/aggregate";
+import type { CommitData } from "../../../shared/types";
+import { aggregateHeatmap } from "../../../utils/aggregate";
 
 const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
 const CELL_SIZE = 28;

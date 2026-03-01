@@ -9,9 +9,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { CommitData } from "../../shared/types";
-import { aggregateFrequency, type TimeUnit } from "../utils/aggregate";
-import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../theme";
+import type { CommitData } from "../../../shared/types";
+import { aggregateFrequency, type TimeUnit } from "../../../utils/aggregate";
+import { CHART_COLORS, TOOLTIP_STYLE, GRID_STROKE, AXIS_STROKE } from "../../../theme";
 
 const UNIT_LABELS: Record<TimeUnit, string> = {
   day: "日",
