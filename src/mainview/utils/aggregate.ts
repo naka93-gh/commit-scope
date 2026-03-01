@@ -1,3 +1,4 @@
+// TODO: 関数群を機能ごとにファイル分割する（frequency, heatmap, calendar, territory 等）
 import { MAX_AUTHORS, MAX_DIRECTORIES } from "../../shared/config";
 import type { CommitData } from "../../shared/types";
 

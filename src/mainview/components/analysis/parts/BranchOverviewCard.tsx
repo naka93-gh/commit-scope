@@ -53,7 +53,7 @@ export function BranchOverviewCard({ repoPath }: Props) {
   const hiddenCount = displayed.length - INITIAL_DISPLAY;
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4">
       <h3 className="text-lg font-semibold mb-4">ブランチ概況</h3>
 
       {loading ? (

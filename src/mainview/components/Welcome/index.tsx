@@ -85,7 +85,7 @@ export function WelcomePage({ onAnalyze }: Props) {
 
       {/* 最近開いたリポジトリ */}
       {recentRepos.length > 0 && (
-        <div className="mb-6 bg-cs-surface border border-cs-border rounded-xl p-4">
+        <div className="mb-6 bg-cs-surface border border-cs-border rounded-[10px] p-4">
           <h2 className="text-sm font-semibold text-cs-text-secondary mb-2">最近開いたリポジトリ</h2>
           <div className="flex flex-wrap gap-2">
             {recentRepos.map((repo) => (

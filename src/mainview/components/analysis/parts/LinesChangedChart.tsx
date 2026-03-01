@@ -20,7 +20,7 @@ export function LinesChangedChart({ commits }: Props) {
   const data = useMemo(() => aggregateLinesChanged(commits, unit), [commits, unit]);
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">変更行数推移</h3>
         <div className="flex gap-1">

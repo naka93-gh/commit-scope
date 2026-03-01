@@ -1,45 +1,51 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --cs-bg: #fafafa;
-    --cs-surface: #ffffff;
-    --cs-surface-2: #f5f0f3;
-    --cs-border: #e8dde4;
-    --cs-border-subtle: #f0e8ed;
-    --cs-text-primary: #1a1a1a;
-    --cs-text-secondary: #6b5f66;
-    --cs-text-tertiary: #9b8f95;
-    --cs-primary: #a0336f;
-    --cs-primary-hover: #86205c;
-    --cs-primary-subtle: #f5e8f0;
-    --cs-primary-muted: #e8c8dd;
-    --cs-accent: #c74b8a;
-    --cs-success: #2d8659;
-    --cs-warning: #c47a1a;
-    --cs-error: #c43333;
+    --cs-bg: #f5f5f7;
+    --cs-sidebar: rgba(245, 245, 247, 0.85);
+    --cs-content: #ffffff;
+    --cs-surface: #f0f0f2;
+    --cs-surface-2: #e5e5ea;
+    --cs-border: rgba(0, 0, 0, 0.1);
+    --cs-border-subtle: rgba(0, 0, 0, 0.05);
+    --cs-active: rgba(0, 0, 0, 0.06);
+    --cs-text-primary: #1d1d1f;
+    --cs-text-secondary: #6e6e73;
+    --cs-text-tertiary: #aeaeb2;
+    --cs-text-section: #86868b;
+    --cs-primary: #0a84ff;
+    --cs-primary-hover: #0071e3;
+    --cs-primary-subtle: rgba(10, 132, 255, 0.1);
+    --cs-primary-muted: rgba(10, 132, 255, 0.18);
+    --cs-accent: #af52de;
+    --cs-success: #34c759;
+    --cs-warning: #ff9500;
+    --cs-error: #ff3b30;
   }
 
   .dark {
-    --cs-bg: #0f0a0d;
-    --cs-surface: #1a1219;
-    --cs-surface-2: #231a21;
-    --cs-border: #3d2e39;
-    --cs-border-subtle: #2e2329;
-    --cs-text-primary: #f0ecf0;
-    --cs-text-secondary: #a89ba3;
-    --cs-text-tertiary: #7a6d76;
-    --cs-primary: #c74b8a;
-    --cs-primary-hover: #d46ba3;
-    --cs-primary-subtle: #2e1a28;
-    --cs-primary-muted: #4a2840;
-    --cs-accent: #e080b5;
-    --cs-success: #4bbf7a;
-    --cs-warning: #e0a84b;
-    --cs-error: #e05555;
+    --cs-bg: #1a1a1e;
+    --cs-sidebar: rgba(30, 30, 34, 0.85);
+    --cs-content: #141416;
+    --cs-surface: #1e1e22;
+    --cs-surface-2: #26262b;
+    --cs-border: rgba(255, 255, 255, 0.06);
+    --cs-border-subtle: rgba(255, 255, 255, 0.04);
+    --cs-active: rgba(255, 255, 255, 0.08);
+    --cs-text-primary: #e8e8ed;
+    --cs-text-secondary: #8e8e93;
+    --cs-text-tertiary: #5a5a5e;
+    --cs-text-section: #6e6e73;
+    --cs-primary: #5ac8fa;
+    --cs-primary-hover: #7dd6fb;
+    --cs-primary-subtle: rgba(90, 200, 250, 0.15);
+    --cs-primary-muted: rgba(90, 200, 250, 0.25);
+    --cs-accent: #bf5af2;
+    --cs-success: #30d158;
+    --cs-warning: #ffd60a;
+    --cs-error: #ff453a;
   }
 }

@@ -4,13 +4,7 @@ import { STREAM_CHUNK_SIZE } from "../shared/config";
 import type { CommitData, FileChange } from "../shared/types";
 
 const SEPARATOR = "---COMMIT_END---";
-const FORMAT = [
-  "Hash:%H",
-  "Author:%an",
-  "Email:%ae",
-  "Date:%aI",
-  "Message:%s",
-].join("%n");
+const FORMAT = ["Hash:%H", "Author:%an", "Email:%ae", "Date:%aI", "Message:%s"].join("%n");
 
 /** 指定パスが有効な Git リポジトリか検証する */
 export async function validateRepoPath(repoPath: string): Promise<void> {
@@ -54,10 +48,7 @@ export async function getHeadHash(repoPath: string): Promise<string> {
 }
 
 /** hash が HEAD の祖先かどうか判定 */
-export async function isAncestor(
-  repoPath: string,
-  hash: string,
-): Promise<boolean> {
+export async function isAncestor(repoPath: string, hash: string): Promise<boolean> {
   const proc = Bun.spawn(["git", "merge-base", "--is-ancestor", hash, "HEAD"], {
     cwd: repoPath,
     stdout: "pipe",

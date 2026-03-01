@@ -24,7 +24,7 @@ export function TerritoryChart({ commits }: Props) {
   };
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4">
       <h3 className="text-lg font-semibold mb-3">
         担当領域{allSelected ? `（上位 ${data.length} ディレクトリ）` : `（${data.length} ディレクトリ選択中）`}
       </h3>

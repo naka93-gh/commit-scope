@@ -23,7 +23,7 @@ export function HeatmapChart({ commits }: Props) {
   }, [grid]);
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4">
       <h3 className="text-lg font-semibold mb-4">時間帯ヒートマップ</h3>
       <div className="overflow-x-auto">
         <svg aria-hidden="true" width={80 + 24 * (CELL_SIZE + GAP)} height={30 + 7 * (CELL_SIZE + GAP)}>

@@ -10,7 +10,7 @@ export function CommitRow({ commit }: Props) {
   const deletions = commit.files.reduce((s, f) => s + f.deletions, 0);
 
   return (
-    <div className="p-3 bg-cs-surface border border-cs-border rounded-xl flex items-center gap-4">
+    <div className="p-3 bg-cs-surface border border-cs-border rounded-[10px] flex items-center gap-4">
       <div className="min-w-0" style={{ flex: "1 1 0", maxWidth: "calc(100% - 280px)" }}>
         <div className="text-sm truncate">{commit.message}</div>
         <div className="text-xs text-cs-text-tertiary mt-1">

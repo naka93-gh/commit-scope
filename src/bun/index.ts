@@ -5,12 +5,7 @@ import type { CommitData, CommitScopeRPC } from "../shared/types";
 import { initApplicationMenu } from "./app-menu";
 import { evictCache, readCache, touchCache, writeCache } from "./cache";
 import { getBranchList } from "./git-branch-parser";
-import {
-  getHeadHash,
-  isAncestor,
-  streamCommits,
-  validateRepoPath,
-} from "./git-log-parser";
+import { getHeadHash, isAncestor, streamCommits, validateRepoPath } from "./git-log-parser";
 import { createLogger } from "./logger";
 
 const logger = await createLogger();
@@ -27,9 +22,7 @@ async function getMainViewUrl(): Promise<string> {
       logger.info(`HMR enabled: Using Vite dev server at ${DEV_SERVER_URL}`);
       return DEV_SERVER_URL;
     } catch {
-      logger.info(
-        "Vite dev server not running. Run 'bun run dev:hmr' for HMR support.",
-      );
+      logger.info("Vite dev server not running. Run 'bun run dev:hmr' for HMR support.");
     }
   }
   return "views://mainview/index.html";
@@ -75,8 +68,7 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
         }
 
         // (B) 差分取得 or (C) フル取得
-        const incremental =
-          cache !== null && (await isAncestor(path, cache.headHash));
+        const incremental = cache !== null && (await isAncestor(path, cache.headHash));
         const allCommits: CommitData[] = [];
 
         streamCommits(
@@ -96,9 +88,7 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
               });
             }
             const total = allCommits.length;
-            logger.debug(
-              `Stream complete: ${total} commits (${incremental ? "incremental" : "full"})`,
-            );
+            logger.debug(`Stream complete: ${total} commits (${incremental ? "incremental" : "full"})`);
             rpc.send.commitStreamEnd({ total });
             writeCache(path, head, allCommits)
               .then(() => evictCache())

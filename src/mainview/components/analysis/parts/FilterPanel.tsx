@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CommitData } from "../../../shared/types";
 
 export interface FilterState {
@@ -39,8 +39,8 @@ export function FilterPanel({ commits, filter, onChange }: Props) {
   };
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4 mb-6">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-cs-primary mb-3">フィルター</h3>
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4 mb-6">
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.6px] text-cs-text-section mb-3">フィルター</h3>
 
       <div className="flex gap-6 flex-wrap">
         {/* 期間指定 */}
@@ -70,42 +70,112 @@ export function FilterPanel({ commits, filter, onChange }: Props) {
         </div>
 
         {/* コミッター選択 */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-sm text-cs-text-secondary mr-1">コミッター:</span>
-            <button
-              type="button"
-              onClick={selectAll}
-              className={`px-2 py-0.5 text-xs rounded-lg transition-colors ${
-                allSelected
-                  ? "bg-cs-primary text-white"
-                  : "bg-cs-surface-2 text-cs-text-secondary border border-cs-border-subtle hover:bg-cs-primary-subtle"
-              }`}
-            >
-              全員
-            </button>
-            {authors.map(([author, count]) => {
-              const selected = allSelected || filter.selectedAuthors.has(author);
+        <CommitterPopover
+          authors={authors}
+          allSelected={allSelected}
+          selectedAuthors={filter.selectedAuthors}
+          onToggle={toggleAuthor}
+          onSelectAll={selectAll}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CommitterPopover({
+  authors,
+  allSelected,
+  selectedAuthors,
+  onToggle,
+  onSelectAll,
+}: {
+  authors: [string, number][];
+  allSelected: boolean;
+  selectedAuthors: Set<string>;
+  onToggle: (author: string) => void;
+  onSelectAll: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    searchRef.current?.focus();
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const filtered = query ? authors.filter(([name]) => name.toLowerCase().includes(query.toLowerCase())) : authors;
+
+  const selectedCount = allSelected ? authors.length : selectedAuthors.size;
+  const label =
+    allSelected || selectedCount === authors.length ? `全員 (${authors.length}名)` : `${selectedCount}名選択中`;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-cs-text-secondary">コミッター:</span>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="px-3 py-1 text-sm rounded-lg border border-cs-border bg-cs-surface-2
+                     text-cs-text-primary hover:bg-cs-primary-subtle transition-colors
+                     flex items-center gap-1"
+        >
+          {label}
+          <span className="text-[10px] text-cs-text-tertiary ml-0.5">▼</span>
+        </button>
+      </div>
+
+      {open && (
+        <div className="absolute z-50 top-full left-0 mt-1 w-64 bg-cs-surface border border-cs-border rounded-lg shadow-lg">
+          <div className="p-2 border-b border-cs-border">
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="検索..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-2 py-1 text-sm bg-cs-surface-2 border border-cs-border rounded
+                         text-cs-text-primary placeholder:text-cs-text-tertiary
+                         focus:outline-none focus:border-cs-primary transition-colors"
+            />
+          </div>
+          <div className="max-h-60 overflow-y-auto">
+            {!query && (
+              <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-cs-surface-2 cursor-pointer border-b border-cs-border">
+                <input type="checkbox" checked={allSelected} onChange={onSelectAll} className="accent-cs-primary" />
+                <span className="text-sm text-cs-text-primary font-medium">全員</span>
+              </label>
+            )}
+            {filtered.map(([author, count]) => {
+              const checked = allSelected || selectedAuthors.has(author);
               return (
-                <button
-                  type="button"
+                <label
                   key={author}
-                  onClick={() => toggleAuthor(author)}
-                  className={`px-2 py-0.5 text-xs rounded-lg truncate max-w-[160px] transition-colors ${
-                    selected
-                      ? "bg-cs-primary text-white"
-                      : "bg-cs-surface-2 text-cs-text-secondary border border-cs-border-subtle hover:bg-cs-primary-subtle"
-                  }`}
-                  title={`${author} (${count})`}
+                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-cs-surface-2 cursor-pointer"
                 >
-                  {author}
-                  <span className="ml-1 opacity-60 font-mono">{count}</span>
-                </button>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggle(author)}
+                    className="accent-cs-primary"
+                  />
+                  <span className="text-sm text-cs-text-primary truncate flex-1">{author}</span>
+                  <span className="text-xs text-cs-text-tertiary font-mono tabular-nums">{count}</span>
+                </label>
               );
             })}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

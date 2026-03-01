@@ -34,7 +34,7 @@ export function ActivityCalendarChart({ commits }: Props) {
   const svgHeight = MONTH_LABEL_HEIGHT + DAYS * (CELL_SIZE + GAP);
 
   return (
-    <div className="bg-cs-surface border border-cs-border rounded-xl p-4">
+    <div className="bg-cs-surface border border-cs-border rounded-[10px] p-4">
       <h3 className="text-lg font-semibold mb-4">活動カレンダー</h3>
       <div className="overflow-x-auto">
         <svg aria-hidden="true" width={svgWidth} height={svgHeight}>

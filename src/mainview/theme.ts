@@ -1,5 +1,5 @@
-/** デザインガイドのチャートカラーパレット（ダークモード） */
-export const CHART_COLORS = ["#C74B8A", "#E080B5", "#6BA3D4", "#80D4A8", "#D4C46B", "#A880D4"];
+/** Readout アクセントパレットに基づくチャートカラー */
+export const CHART_COLORS = ["#5ac8fa", "#30d158", "#ff9f0a", "#bf5af2", "#ffd60a", "#ff453a"];
 
 /** Recharts の Tooltip / Grid 共通スタイル */
 export const TOOLTIP_STYLE = {
@@ -7,7 +7,7 @@ export const TOOLTIP_STYLE = {
     backgroundColor: "var(--cs-surface)",
     border: "1px solid var(--cs-border)",
     borderRadius: "10px",
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif",
   },
   labelStyle: {
     color: "var(--cs-text-primary)",
