@@ -2,7 +2,7 @@ import { BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
 import { RPC_MAX_REQUEST_TIME } from "../shared/config";
 import type { CommitData, CommitScopeRPC } from "../shared/types";
 import { initApplicationMenu } from "./app-menu";
-import { readCache, writeCache } from "./cache";
+import { evictCache, readCache, touchCache, writeCache } from "./cache";
 import { getBranchList } from "./git-branch-parser";
 import { getHeadHash, isAncestor, streamCommits, validateRepoPath } from "./git-log-parser";
 import { createLogger } from "./logger";
@@ -57,6 +57,7 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
         // (A) キャッシュヒット: HEAD が同一ならキャッシュから即座に返す
         if (cache && cache.headHash === head) {
           logger.debug(`Cache hit: ${cache.commits.length} commits`);
+          touchCache(path).catch(() => {});
           rpc.send.commitChunk({
             commits: cache.commits,
             progress: cache.commits.length,
@@ -88,7 +89,9 @@ const rpc = BrowserView.defineRPC<CommitScopeRPC>({
             const total = allCommits.length;
             logger.debug(`Stream complete: ${total} commits (${incremental ? "incremental" : "full"})`);
             rpc.send.commitStreamEnd({ total });
-            writeCache(path, head, allCommits).catch(() => {});
+            writeCache(path, head, allCommits)
+              .then(() => evictCache())
+              .catch(() => {});
           })
           .catch((e) => {
             const message = e instanceof Error ? e.message : String(e);

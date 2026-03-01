@@ -29,3 +29,6 @@ export const STREAM_CHUNK_SIZE = 100;
 
 /** コミット一覧の表示上限 */
 export const MAX_DISPLAY_COMMITS = 100;
+
+/** キャッシュファイルの最大保持数（LRU エビクション） */
+export const CACHE_MAX_ENTRIES = 10;
