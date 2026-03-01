@@ -39,11 +39,7 @@ export async function readCache(repoPath: string): Promise<CommitCache | null> {
 }
 
 /** キャッシュをディスクに書き込む */
-export async function writeCache(
-  repoPath: string,
-  headHash: string,
-  commits: CommitData[],
-): Promise<void> {
+export async function writeCache(repoPath: string, headHash: string, commits: CommitData[]): Promise<void> {
   await mkdir(CACHE_DIR, { recursive: true });
   const cache: CommitCache = { headHash, commits };
   await Bun.write(getCachePath(repoPath), JSON.stringify(cache));

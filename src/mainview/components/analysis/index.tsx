@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { MAX_DISPLAY_COMMITS } from "../../../shared/config";
 import { useCommitAnalysis } from "../../hooks/useCommitAnalysis";
+import { ErrorBanner } from "../ErrorBanner";
 import { ActivityCalendarChart } from "./parts/ActivityCalendarChart";
 import { BranchOverviewCard } from "./parts/BranchOverviewCard";
 import { CommitFrequencyChart } from "./parts/CommitFrequencyChart";
@@ -24,7 +25,7 @@ interface Props {
 }
 
 export function AnalysisPage({ repoPath, onClose }: Props) {
-  const { commits, error, loadingStep, streamReceived, renderedUpTo, reset } = useCommitAnalysis(repoPath);
+  const { commits, error, clearError, loadingStep, streamReceived, renderedUpTo, reset } = useCommitAnalysis(repoPath);
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
 
   const filtered = useMemo(() => applyFilter(commits, filter), [commits, filter]);
@@ -69,9 +70,7 @@ export function AnalysisPage({ repoPath, onClose }: Props) {
       </div>
 
       {/* エラー表示 */}
-      {error && (
-        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">{error}</div>
-      )}
+      {error && <ErrorBanner message={error} onClose={clearError} />}
 
       {/* フィルター & サマリー (step 1) */}
       {commits.length > 0 && (loadingStep === null || renderedUpTo >= 1) && (

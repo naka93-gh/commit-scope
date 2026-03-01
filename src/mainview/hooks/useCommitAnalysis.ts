@@ -76,14 +76,16 @@ export function useCommitAnalysis(repoPath: string) {
     return () => cancelAnimationFrame(raf);
   }, [renderedUpTo, addRecentRepo, repoPath]);
 
+  const clearError = useCallback(() => setError(null), []);
+
   const reset = useCallback(() => {
     setCommits([]);
     commitsRef.current = [];
-    setError(null);
+    clearError();
     setLoadingStep(null);
     setRenderedUpTo(0);
     setStreamReceived(0);
-  }, []);
+  }, [clearError]);
 
-  return { commits, error, loadingStep, streamReceived, renderedUpTo, reset } as const;
+  return { commits, error, clearError, loadingStep, streamReceived, renderedUpTo, reset } as const;
 }

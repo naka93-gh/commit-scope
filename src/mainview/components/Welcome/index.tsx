@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRecentRepos } from "../../hooks/useRecentRepos";
 import { rpc } from "../../rpc";
+import { ErrorBanner } from "../ErrorBanner";
 
 interface Props {
   onAnalyze: (path: string) => void;
@@ -118,9 +119,7 @@ export function WelcomePage({ onAnalyze }: Props) {
       )}
 
       {/* エラー表示 */}
-      {error && (
-        <div className="mb-6 p-4 bg-cs-surface border border-cs-error/40 rounded-lg text-cs-error">{error}</div>
-      )}
+      {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
     </>
   );
 }
