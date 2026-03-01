@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { MAX_DISPLAY_COMMITS } from "../../../shared/config";
-import type { CommitData } from "../../../shared/types";
-import { useRecentRepos } from "../../hooks/useRecentRepos";
-import { rpc } from "../../rpc";
+import { useCommitAnalysis } from "../../hooks/useCommitAnalysis";
 import { ActivityCalendarChart } from "./parts/ActivityCalendarChart";
 import { BranchOverviewCard } from "./parts/BranchOverviewCard";
 import { CommitFrequencyChart } from "./parts/CommitFrequencyChart";
@@ -10,7 +8,7 @@ import { CommitRow } from "./parts/CommitRow";
 import { applyFilter, FilterPanel, type FilterState } from "./parts/FilterPanel";
 import { HeatmapChart } from "./parts/HeatmapChart";
 import { LinesChangedChart } from "./parts/LinesChangedChart";
-import { LoadingDialog, STEPS_COUNT } from "./parts/LoadingDialog";
+import { LoadingDialog } from "./parts/LoadingDialog";
 import { SummaryCard } from "./parts/SummaryCard";
 import { TerritoryChart } from "./parts/TerritoryChart";
 
@@ -26,90 +24,16 @@ interface Props {
 }
 
 export function AnalysisPage({ repoPath, onClose }: Props) {
-  const [commits, setCommits] = useState<CommitData[]>([]);
+  const { commits, error, loadingStep, streamReceived, renderedUpTo, reset } = useCommitAnalysis(repoPath);
   const [filter, setFilter] = useState<FilterState>(INITIAL_FILTER);
-  const [error, setError] = useState<string | null>(null);
-  const [loadingStep, setLoadingStep] = useState<number | null>(0);
-  const [streamReceived, setStreamReceived] = useState(0);
-  const [renderedUpTo, setRenderedUpTo] = useState(0);
-  const { add: addRecentRepo } = useRecentRepos();
-
-  const commitsRef = useRef<CommitData[]>([]);
-
-  // ストリーミングメッセージのリスナ登録
-  useEffect(() => {
-    const onChunk = ({ commits: chunk, progress }: { commits: CommitData[]; progress: number }) => {
-      for (const c of chunk) commitsRef.current.push(c);
-      setStreamReceived(progress);
-    };
-
-    const onEnd = () => {
-      setCommits(commitsRef.current);
-      setLoadingStep(1);
-    };
-
-    const onError = ({ message }: { message: string }) => {
-      setLoadingStep(null);
-      setError(message);
-    };
-
-    rpc.addMessageListener("commitChunk", onChunk);
-    rpc.addMessageListener("commitStreamEnd", onEnd);
-    rpc.addMessageListener("commitStreamError", onError);
-
-    return () => {
-      rpc.removeMessageListener("commitChunk", onChunk);
-      rpc.removeMessageListener("commitStreamEnd", onEnd);
-      rpc.removeMessageListener("commitStreamError", onError);
-    };
-  }, []);
-
-  // マウント時に解析開始
-  useEffect(() => {
-    const analyze = async () => {
-      try {
-        await rpc.request.analyzeRepository({ path: repoPath });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-        setLoadingStep(null);
-      }
-    };
-    analyze();
-  }, [repoPath]);
-
-  // loadingStep が変わったら対応コンポーネントをマウント
-  useEffect(() => {
-    if (loadingStep === null || loadingStep < 1 || loadingStep > STEPS_COUNT) return;
-    const raf = requestAnimationFrame(() => setRenderedUpTo(loadingStep));
-    return () => cancelAnimationFrame(raf);
-  }, [loadingStep]);
-
-  // コンポーネントがマウントされたら次のステップへ or 完了
-  useEffect(() => {
-    if (renderedUpTo < 1) return;
-    if (renderedUpTo >= STEPS_COUNT) {
-      const raf = requestAnimationFrame(() => {
-        setLoadingStep(null);
-        addRecentRepo(repoPath);
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-    const raf = requestAnimationFrame(() => setLoadingStep(renderedUpTo + 1));
-    return () => cancelAnimationFrame(raf);
-  }, [renderedUpTo, addRecentRepo, repoPath]);
 
   const filtered = useMemo(() => applyFilter(commits, filter), [commits, filter]);
 
   const handleCancel = useCallback(() => {
-    setCommits([]);
-    commitsRef.current = [];
+    reset();
     setFilter(INITIAL_FILTER);
-    setError(null);
-    setLoadingStep(null);
-    setRenderedUpTo(0);
-    setStreamReceived(0);
     onClose();
-  }, [onClose]);
+  }, [reset, onClose]);
 
   return (
     <>
